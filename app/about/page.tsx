@@ -1,0 +1,265 @@
+import Link from "next/link";
+import type { Metadata } from "next";
+import { Ban, Scale, Search, ShieldCheck, Target, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { StatCounter } from "@/components/stat-counter";
+
+export const metadata: Metadata = {
+  title: "About — Krrrja",
+  description:
+    "Why we built Krrrja: screen more CVs in less time. Let AI rank, you decide.",
+};
+
+const STATS = [
+  { value: "10x", label: "Faster first-pass screening" },
+  { value: "0–100", label: "Score per CV vs your criteria" },
+  { value: "<5s", label: "Median AI scoring per CV" },
+  { value: "100%", label: "Final call stays human" },
+];
+
+const VALUES = [
+  {
+    icon: Scale,
+    title: "Human decides",
+    body: "AI ranks and triages. It never rejects a candidate for you. The hire call is yours.",
+  },
+  {
+    icon: Search,
+    title: "No hidden inference",
+    body: "We score only what's in the CV against your stated criteria. No guessing facts that aren't there.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Privacy by default",
+    body: "CV files are private per org, tenant-isolated at the database, never public by default.",
+  },
+  {
+    icon: Target,
+    title: "Criteria first",
+    body: "Your free-text criteria is the primary constraint. Not a generic resume beauty contest.",
+  },
+  {
+    icon: Ban,
+    title: "Neutral language",
+    body: "Summaries and red flags avoid sensitive inference. Fair, plain, defensible.",
+  },
+  {
+    icon: Zap,
+    title: "Built for SMB",
+    body: "No enterprise bloat. A hiring team of three ships a shortlist before lunch.",
+  },
+];
+
+const TIMELINE = [
+  {
+    year: "The problem",
+    title: "200 CVs, one afternoon",
+    body: "SMB hiring teams drown in resumes. No ATS budget, no recruiter army — just a founder and a spreadsheet at midnight.",
+  },
+  {
+    year: "The bet",
+    title: "Rank, don't replace",
+    body: "After 7 AI SaaS pitches that missed, one lesson stuck: teams don't want AI to decide. They want it to triage.",
+  },
+  {
+    year: "The build",
+    title: "Score, summary, red flags",
+    body: "One strict JSON contract per CV — a 0–100 score, 3 bullets, and honest red flags. Nothing fancier. Nothing sneakier.",
+  },
+  {
+    year: "Today",
+    title: "Screen more, in less time",
+    body: "Upload a batch, set criteria, get a ranked shortlist in minutes. You read the top of the pile, not the whole pile.",
+  },
+];
+
+const TEAM = [
+  { initials: "BM", name: "Bill M.", role: "Design partner", tint: "bg-primary" },
+  { initials: "AI", name: "gpt-4o", role: "Scoring engine", tint: "bg-secondary" },
+  { initials: "HR", name: "Your team", role: "The decision", tint: "bg-accent" },
+];
+
+const PRINCIPLES = [
+  "AI ranks, humans decide.",
+  "Score against criteria, not vibes.",
+  "Private by default, always.",
+  "Say what's in the CV — nothing more.",
+];
+
+export default function AboutPage() {
+  return (
+    <div className="flex-1 bg-background">
+      {/* Nav */}
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
+            Kr
+          </div>
+          <span className="text-lg font-bold tracking-tight">Krrrja</span>
+        </Link>
+        <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground sm:flex">
+          <Link href="/#find-jobs" className="transition-colors hover:text-foreground">Find Jobs</Link>
+          <Link href="/#features" className="transition-colors hover:text-foreground">Features</Link>
+          <Link href="/#how" className="transition-colors hover:text-foreground">How it works</Link>
+          <Link href="/#pricing" className="transition-colors hover:text-foreground">Pricing</Link>
+          <Link href="/about" className="font-semibold text-foreground">About</Link>
+        </nav>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" className="rounded-full" render={<Link href="/login">Log in</Link>} />
+          <Button className="rounded-full px-5" render={<Link href="/signup">Sign up</Link>} />
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="mx-auto max-w-6xl px-6 pt-12 pb-16 lg:pt-20">
+        <div className="flex flex-col items-center gap-6 text-center">
+          <span className="w-fit rounded-full bg-secondary px-4 py-1.5 text-sm font-semibold text-secondary-foreground">
+            About Krrrja
+          </span>
+          <h1 className="max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+            We give hiring teams their
+            <span className="text-brand-strong"> afternoons back.</span>
+          </h1>
+          <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
+            Krrrja is an AI-assisted CV screening tool for small hiring teams. We rank and
+            summarize the pile so a human reads the top of it — not all of it.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button size="lg" className="h-12 rounded-full px-7 text-base" render={<Link href="/signup">Start screening free</Link>} />
+            <Button size="lg" variant="outline" className="h-12 rounded-full px-7 text-base" render={<Link href="/#how">See how it works</Link>} />
+          </div>
+        </div>
+      </section>
+
+      {/* Stats band — numbers count up from 0 on load */}
+      <section className="mx-auto max-w-6xl px-6 pb-16">
+        <StatCounter stats={STATS} />
+      </section>
+
+      {/* Mission split */}
+      <section className="mx-auto max-w-6xl px-6 py-16">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div className="flex flex-col gap-5">
+            <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Our mission</span>
+            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+              Screen more CVs in less time. Let AI rank, you decide.
+            </h2>
+            <p className="text-lg leading-relaxed text-muted-foreground">
+              Hiring is a human judgement. But the first pass — reading 200 resumes to find the 20
+              worth a call — is a grind that burns out the very people who should be interviewing.
+            </p>
+            <p className="text-lg leading-relaxed text-muted-foreground">
+              So we automate the grind, not the judgement. Krrrja scores every CV against
+              <em> your </em> criteria, hands you a ranked shortlist with a 3-point summary and red
+              flags, and then gets out of the way.
+            </p>
+          </div>
+          <div className="flex flex-col gap-4 rounded-[2rem] border border-border bg-card p-8">
+            <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">What we believe</span>
+            <ul className="flex flex-col gap-4">
+              {PRINCIPLES.map((p) => (
+                <li key={p} className="flex items-start gap-3">
+                  <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">✓</span>
+                  <span className="text-base font-medium">{p}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Values grid */}
+      <section className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mb-10 flex flex-col items-center gap-3 text-center">
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">The rules we build by</h2>
+          <p className="max-w-lg text-muted-foreground">Six principles baked into every score Krrrja returns.</p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {VALUES.map((v) => (
+            <div key={v.title} className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-7 transition-colors hover:border-primary">
+              <span className="flex size-11 items-center justify-center rounded-2xl bg-secondary text-secondary-foreground">
+                <v.icon className="size-5" strokeWidth={2} />
+              </span>
+              <h3 className="text-lg font-bold tracking-tight">{v.title}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{v.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Timeline / story */}
+      <section className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mb-10 flex flex-col gap-3">
+          <span className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Our story</span>
+          <h2 className="max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl">
+            From midnight spreadsheet to ranked shortlist
+          </h2>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {TIMELINE.map((t, i) => (
+            <div key={t.title} className="relative flex flex-col gap-3 rounded-3xl border border-border bg-card p-7">
+              <span className="flex size-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{i + 1}</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t.year}</span>
+              <h3 className="text-lg font-bold leading-tight tracking-tight">{t.title}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{t.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Team */}
+      <section className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mb-10 flex flex-col items-center gap-3 text-center">
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Who does the work</h2>
+          <p className="max-w-lg text-muted-foreground">Three parties, one shortlist. Each has exactly one job.</p>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-3">
+          {TEAM.map((m) => (
+            <div key={m.name} className="flex flex-col items-center gap-3 rounded-3xl border border-border bg-card p-8 text-center">
+              <span className={`flex size-16 items-center justify-center rounded-full ${m.tint} text-lg font-bold text-primary-foreground`}>{m.initials}</span>
+              <h3 className="text-lg font-bold tracking-tight">{m.name}</h3>
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">{m.role}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Quote */}
+      <section className="mx-auto max-w-6xl px-6 py-16">
+        <figure className="flex flex-col items-center gap-6 rounded-[2rem] bg-secondary px-8 py-14 text-center">
+          <span className="text-5xl leading-none text-secondary-foreground/40">“</span>
+          <blockquote className="max-w-2xl text-2xl font-bold leading-snug tracking-tight text-secondary-foreground sm:text-3xl">
+            We don&apos;t want AI to pick our people. We want it to hand us the ten resumes worth reading.
+          </blockquote>
+          <figcaption className="text-sm font-medium text-secondary-foreground/70">
+            — Every SMB hiring manager, basically
+          </figcaption>
+        </figure>
+      </section>
+
+      {/* CTA */}
+      <section className="mx-auto max-w-6xl px-6 pb-24">
+        <div className="flex flex-col items-center gap-6 rounded-[2rem] bg-primary px-8 py-16 text-center text-primary-foreground">
+          <h2 className="max-w-xl text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Ready to read the top of the pile?
+          </h2>
+          <p className="max-w-md text-primary-foreground/80">
+            Start free — 3 job openings, 20 CVs a month, no card required.
+          </p>
+          <Button size="lg" variant="secondary" className="h-12 rounded-full px-7 text-base" render={<Link href="/signup">Create your account</Link>} />
+        </div>
+      </section>
+
+      <footer className="border-t border-border">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <span>© 2026 Krrrja. Screen more CVs in less time.</span>
+          <div className="flex gap-6">
+            <Link href="/" className="hover:text-foreground">Home</Link>
+            <Link href="/about" className="hover:text-foreground">About</Link>
+            <Link href="/login" className="hover:text-foreground">Log in</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
