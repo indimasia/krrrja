@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, Briefcase, FileUp, Users, ShieldCheck } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Building2, LayoutDashboard, Briefcase, FileUp, Users, ShieldCheck } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { LogoutDialog } from "@/components/logout-dialog";
 import { createClient } from "@/lib/supabase/server";
@@ -10,6 +10,7 @@ import { isPlatformAdmin } from "@/lib/data/platform";
 
 const NAV_ITEMS = [
   { href: "/pro/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/pro/orgs", label: "Organizations", icon: Building2 },
   { href: "/pro/jobs", label: "Jobs", icon: Briefcase },
   { href: "/pro/resume-upload", label: "Resume Upload", icon: FileUp },
   { href: "/pro/users", label: "User", icon: Users },
@@ -25,6 +26,8 @@ export default async function ProLayout({ children }: { children: React.ReactNod
     data: { user },
   } = await supabase.auth.getUser();
   const email = user?.email ?? "";
+  const displayName = (user?.user_metadata?.display_name as string) || "";
+  const avatarUrl = (user?.user_metadata?.avatar_url as string) || null;
 
   return (
     <div className="flex min-h-full bg-background">
@@ -58,17 +61,22 @@ export default async function ProLayout({ children }: { children: React.ReactNod
         </nav>
 
         <div className="m-3 space-y-2 rounded-2xl border border-border px-3 py-3">
-          <div className="flex items-center gap-3">
+          <Link
+            href="/pro/profile"
+            className="flex items-center gap-3 rounded-xl px-1 py-1 -mx-1 -my-1 transition-colors hover:bg-muted"
+            title="Edit profile"
+          >
             <Avatar className="size-9">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt="Profile photo" />}
               <AvatarFallback className="bg-muted text-foreground">
-                {email ? email[0].toUpperCase() : "S"}
+                {(displayName || email || "S")[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 text-sm">
-              <p className="truncate font-medium leading-none">{email || "—"}</p>
+              <p className="truncate font-medium leading-none">{displayName || email || "—"}</p>
               <p className="text-xs text-muted-foreground">Super Admin</p>
             </div>
-          </div>
+          </Link>
           <LogoutDialog className="w-full rounded-full justify-start" />
         </div>
       </aside>
