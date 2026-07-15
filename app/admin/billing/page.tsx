@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
+import { ManageSubscriptionButton, UpgradeButton } from "@/components/billing-buttons";
 import { FREE_TIER_LIMITS, getOrgContext, getOrgUsage } from "@/lib/data/org";
+import { canManageBilling } from "@/lib/permissions";
 
 const FREE_FEATURES = [
   `${FREE_TIER_LIMITS.maxActiveJobOpenings} active job openings`,
@@ -11,11 +12,13 @@ const FREE_FEATURES = [
   "AI scoring, summaries & red flags",
 ];
 
+// CSV export is deliberately NOT listed as Pro-only: it ships on every tier,
+// gated by role (org admin), not by plan.
 const PRO_FEATURES = [
   "Unlimited job openings",
   "Unlimited CV processing",
   "AI scoring, summaries & red flags",
-  "CSV export",
+  "Priority support",
 ];
 
 function UsageBar({ label, used, limit }: { label: string; used: number; limit: number | null }) {
@@ -42,7 +45,7 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
 export default async function BillingPage() {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
-  if (ctx.role !== "admin") redirect("/admin/dashboard");
+  if (!canManageBilling(ctx.role)) redirect("/admin/dashboard");
 
   const usage = await getOrgUsage(ctx.orgId);
   const isPro = ctx.subscriptionTier === "pro";
@@ -113,14 +116,7 @@ export default async function BillingPage() {
                 <li key={f}>• {f}</li>
               ))}
             </ul>
-            {!isPro && (
-              <Button className="mt-5 w-full rounded-full" disabled>
-                Upgrade to Pro
-              </Button>
-            )}
-            <p className="mt-2 text-center text-xs text-muted-foreground">
-              Stripe checkout lands with the billing build step.
-            </p>
+            {isPro ? <ManageSubscriptionButton /> : <UpgradeButton />}
           </CardContent>
         </Card>
       </div>
