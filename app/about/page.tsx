@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Ban, Scale, Search, ShieldCheck, Target, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatCounter } from "@/components/stat-counter";
+import { SiteNav } from "@/components/marketing/site-nav";
+import { SiteFooter } from "@/components/marketing/site-footer";
 
 export const metadata: Metadata = {
   title: "About — Krrrja",
@@ -89,26 +91,7 @@ const PRINCIPLES = [
 export default function AboutPage() {
   return (
     <div className="flex-1 bg-background">
-      {/* Nav */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
-            Kr
-          </div>
-          <span className="text-lg font-bold tracking-tight">Krrrja</span>
-        </Link>
-        <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground sm:flex">
-          <Link href="/#find-jobs" className="transition-colors hover:text-foreground">Find Jobs</Link>
-          <Link href="/#features" className="transition-colors hover:text-foreground">Features</Link>
-          <Link href="/#how" className="transition-colors hover:text-foreground">How it works</Link>
-          <Link href="/#pricing" className="transition-colors hover:text-foreground">Pricing</Link>
-          <Link href="/about" className="font-semibold text-foreground">About</Link>
-        </nav>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" className="rounded-full" render={<Link href="/login">Log in</Link>} />
-          <Button className="rounded-full px-5" render={<Link href="/signup">Sign up</Link>} />
-        </div>
-      </header>
+      <SiteNav />
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-12 pb-16 lg:pt-20">
@@ -126,7 +109,7 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button size="lg" className="h-12 rounded-full px-7 text-base" render={<Link href="/signup">Start screening free</Link>} />
-            <Button size="lg" variant="outline" className="h-12 rounded-full px-7 text-base" render={<Link href="/#how">See how it works</Link>} />
+            <Button size="lg" variant="outline" className="h-12 rounded-full px-7 text-base" render={<Link href="/how-it-works">See how it works</Link>} />
           </div>
         </div>
       </section>
@@ -250,16 +233,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© 2026 Krrrja. Screen more CVs in less time.</span>
-          <div className="flex gap-6">
-            <Link href="/" className="hover:text-foreground">Home</Link>
-            <Link href="/about" className="hover:text-foreground">About</Link>
-            <Link href="/login" className="hover:text-foreground">Log in</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

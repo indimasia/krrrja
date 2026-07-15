@@ -161,10 +161,46 @@
   animation: hero-row-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes hero-orbit {
+  0%, 100% { margin-top: 0; margin-left: 0; }
+  25% { margin-top: -6px; margin-left: 4px; }
+  50% { margin-top: 0; margin-left: 8px; }
+  75% { margin-top: 6px; margin-left: 4px; }
+}
+
+.hero-orbit {
+  animation: hero-orbit 7s ease-in-out infinite;
+}
+.hero-orbit-reverse {
+  animation: hero-orbit 9s ease-in-out infinite reverse;
+}
+
+/* Scanning sweep over the batch-upload dropzone while text is extracted. */
+@keyframes hero-scan {
+  0% { transform: translateY(-100%); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translateY(320%); opacity: 0; }
+}
+.hero-scan {
+  animation: hero-scan 2.4s ease-in-out infinite;
+}
+
+/* Livewire-style slide progress: fills left→right over one slide interval. */
+@keyframes carousel-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+.carousel-progress {
+  animation: carousel-progress linear forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-float,
   .hero-pulse-dot,
-  .hero-row-in {
+  .hero-row-in,
+  .hero-orbit,
+  .hero-orbit-reverse,
+  .hero-scan {
     animation: none;
   }
 }
