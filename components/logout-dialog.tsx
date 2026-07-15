@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { logout } from "@/lib/auth-actions";
 
-// Confirm-before-logout. Used in every dashboard shell (admin, pro, candidate).
+// Confirm-before-logout. Used in every dashboard shell (admin, pro).
 export function LogoutDialog({ className }: { className?: string }) {
   const [pending, startTransition] = useTransition();
 
