@@ -1,4 +1,4 @@
-import { ShieldCheck, UserCog, User, IdCard } from "lucide-react";
+import { ShieldCheck, UserCog, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -24,13 +24,6 @@ const ROLES = [
     icon: User,
     scope: "Organization",
     desc: "Recruiter: upload CVs, view candidates, update status/notes. No admin views.",
-  },
-  {
-    key: "candidate",
-    label: "Candidate",
-    icon: IdCard,
-    scope: "Candidate portal",
-    desc: "Login user scoped to /candidate. Views undefined — shell only.",
   },
 ];
 

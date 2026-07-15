@@ -1,16 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { listAllJobOpenings } from "@/lib/data/platform";
+import { listAllJobOpenings, listOrgOptions } from "@/lib/data/platform";
+import { NewJobButton, JobRowActions } from "@/components/pro/job-crud";
 
 export default async function ProJobsPage() {
-  const jobs = await listAllJobOpenings();
+  const [jobs, orgs] = await Promise.all([listAllJobOpenings(), listOrgOptions()]);
 
   return (
     <div className="space-y-6 p-8">
-      <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Jobs</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Every job opening across all organizations.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Jobs</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Every job opening across all organizations.</p>
+        </div>
+        <NewJobButton orgs={orgs} />
       </div>
 
       <Card className="overflow-hidden rounded-3xl p-0">
@@ -20,13 +24,14 @@ export default async function ProJobsPage() {
               <TableHead>Title</TableHead>
               <TableHead>Organization</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Created</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {jobs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
                   No job openings yet.
                 </TableCell>
               </TableRow>
@@ -38,8 +43,11 @@ export default async function ProJobsPage() {
                   <TableCell>
                     <Badge variant={job.status === "active" ? "default" : "outline"}>{job.status}</Badge>
                   </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
+                  <TableCell className="text-muted-foreground">
                     {new Date(job.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <JobRowActions job={job} orgs={orgs} />
                   </TableCell>
                 </TableRow>
               ))

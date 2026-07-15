@@ -9,9 +9,10 @@ export const FREE_TIER_LIMITS = {
 export type OrgContext = {
   userId: string;
   orgId: string;
-  role: "admin" | "member" | "candidate";
+  role: "admin" | "member";
   orgName: string;
   subscriptionTier: "free" | "pro";
+  suspended: boolean;
 };
 
 // Resolves the caller's org + role. RLS on org_members returns only their own row.
@@ -24,26 +25,45 @@ export async function getOrgContext(): Promise<OrgContext | null> {
 
   const { data: membership } = await supabase
     .from("org_members")
-    .select("org_id, role, orgs(name, subscription_tier)")
+    .select("org_id, role, orgs(name, subscription_tier, subscription_status, grace_expires_at, suspended_at)")
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!membership) return null;
-  const org = membership.orgs as unknown as { name: string; subscription_tier: string };
+  const org = membership.orgs as unknown as {
+    name: string;
+    subscription_tier: string;
+    subscription_status: string | null;
+    grace_expires_at: string | null;
+    suspended_at: string | null;
+  };
+
+  // Effective tier: a cancelled Pro subscription keeps Pro through the 3-day
+  // grace window (grace_expires_at set by the Stripe webhook), then reverts to
+  // Free limits without waiting for a webhook or manual downgrade.
+  let tier = (org.subscription_tier as "free" | "pro") ?? "free";
+  if (
+    tier === "pro" &&
+    org.subscription_status === "cancelled" &&
+    (!org.grace_expires_at || new Date(org.grace_expires_at).getTime() <= Date.now())
+  ) {
+    tier = "free";
+  }
 
   return {
     userId: user.id,
     orgId: membership.org_id,
-    role: membership.role as "admin" | "member" | "candidate",
+    role: membership.role as "admin" | "member",
     orgName: org.name,
-    subscriptionTier: (org.subscription_tier as "free" | "pro") ?? "free",
+    subscriptionTier: tier,
+    suspended: org.suspended_at !== null,
   };
 }
 
 export type OrgMember = {
   userId: string;
   email: string;
-  role: "admin" | "member" | "candidate";
+  role: "admin" | "member";
   joinedAt: string;
 };
 

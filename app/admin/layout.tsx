@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import Link from "next/link";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { LogoutDialog } from "@/components/logout-dialog";
 import { SidebarNav } from "@/components/sidebar-nav";
@@ -22,13 +23,31 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Resolve the caller's org + role (RLS returns only their own membership row).
   const { data: membership } = await supabase
     .from("org_members")
-    .select("role, orgs(name, subscription_tier)")
+    .select("role, orgs(name, subscription_tier, suspended_at)")
     .eq("user_id", user?.id ?? "")
     .maybeSingle();
 
   const role = (membership?.role as "admin" | "member") ?? "member";
-  const org = membership?.orgs as { name: string; subscription_tier: string } | undefined;
+  const org = membership?.orgs as
+    | { name: string; subscription_tier: string; suspended_at: string | null }
+    | undefined;
   const email = user?.email ?? "";
+  const displayName = (user?.user_metadata?.display_name as string) || "";
+  const avatarUrl = (user?.user_metadata?.avatar_url as string) || null;
+
+  // Suspended org: block the whole section (server actions re-check via
+  // getOrgContext().suspended — this is the UI half of that enforcement).
+  if (org?.suspended_at) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+        <h1 className="text-2xl font-extrabold tracking-tight">Organization suspended</h1>
+        <p className="max-w-md text-sm text-muted-foreground">
+          {org.name} has been suspended by the platform. Your data is retained. Contact support to resolve this.
+        </p>
+        <LogoutDialog className="rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-full bg-background">
@@ -53,17 +72,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <SidebarNav items={NAV_ITEMS.filter((item) => item.roles.includes(role))} />
 
         <div className="m-3 space-y-2 rounded-2xl border border-border px-3 py-3">
-          <div className="flex items-center gap-3">
+          <Link
+            href="/admin/profile"
+            className="flex items-center gap-3 rounded-xl px-1 py-1 -mx-1 -my-1 transition-colors hover:bg-muted"
+            title="Edit profile"
+          >
             <Avatar className="size-9">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt="Profile photo" />}
               <AvatarFallback className="bg-muted text-foreground">
-                {email ? email[0].toUpperCase() : "U"}
+                {(displayName || email || "U")[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 text-sm">
-              <p className="truncate font-medium leading-none">{email || "—"}</p>
+              <p className="truncate font-medium leading-none">{displayName || email || "—"}</p>
               <p className="text-xs capitalize text-muted-foreground">{role}</p>
             </div>
-          </div>
+          </Link>
           <LogoutDialog className="w-full rounded-full justify-start" />
         </div>
       </aside>
