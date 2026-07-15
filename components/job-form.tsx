@@ -6,21 +6,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createJobOpening, type JobFormState } from "@/lib/actions/jobs";
+import { createJobOpening, updateJobOpening, type JobFormState } from "@/lib/actions/jobs";
 
-export function JobForm() {
-  const [state, formAction, pending] = useActionState<JobFormState, FormData>(createJobOpening, null);
+type JobFormValues = {
+  id: string;
+  title: string;
+  description: string;
+  criteria: string;
+};
+
+// Create mode when `job` is absent; edit mode pre-fills and updates in place.
+export function JobForm({ job }: { job?: JobFormValues }) {
+  const action = job ? updateJobOpening.bind(null, job.id) : createJobOpening;
+  const [state, formAction, pending] = useActionState<JobFormState, FormData>(action, null);
+  const cancelHref = job ? `/admin/jobs/${job.id}` : "/admin/dashboard";
 
   return (
     <form action={formAction} className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="title">Job title</Label>
-        <Input id="title" name="title" placeholder="e.g. Senior Backend Engineer" required />
+        <Input id="title" name="title" placeholder="e.g. Senior Backend Engineer" defaultValue={job?.title} required />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="description">Job description</Label>
-        <Textarea id="description" name="description" rows={5} placeholder="Responsibilities, team, what success looks like..." required />
+        <Textarea
+          id="description"
+          name="description"
+          rows={5}
+          placeholder="Responsibilities, team, what success looks like..."
+          defaultValue={job?.description}
+          required
+        />
       </div>
 
       <div className="space-y-2">
@@ -30,6 +47,7 @@ export function JobForm() {
           name="criteria"
           rows={5}
           placeholder="e.g. 5+ yrs Node.js, distributed systems experience, startup background preferred"
+          defaultValue={job?.criteria}
           required
         />
         <p className="text-xs text-muted-foreground">
@@ -41,9 +59,9 @@ export function JobForm() {
 
       <div className="flex gap-2">
         <Button type="submit" disabled={pending} className="rounded-full px-5">
-          {pending ? "Creating..." : "Create job opening"}
+          {pending ? (job ? "Saving..." : "Creating...") : job ? "Save changes" : "Create job opening"}
         </Button>
-        <Button type="button" variant="outline" className="rounded-full px-5" render={<Link href="/dashboard">Cancel</Link>} />
+        <Button type="button" variant="outline" className="rounded-full px-5" render={<Link href={cancelHref}>Cancel</Link>} />
       </div>
     </form>
   );

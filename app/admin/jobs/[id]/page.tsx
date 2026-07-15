@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/page-header";
 import { getJobOpening } from "@/lib/data/jobs";
 import { getOrgContext } from "@/lib/data/org";
 import { toggleJobStatus } from "@/lib/actions/jobs";
+import { canManageJobOpenings } from "@/lib/permissions";
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,12 +26,19 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
         description={`${job.candidateCount} candidates · created ${new Date(job.createdAt).toLocaleDateString()}`}
         action={
           <>
-            {ctx.role === "admin" && (
-              <form action={toggleJobStatus.bind(null, job.id, job.status === "active" ? "closed" : "active")}>
-                <Button type="submit" variant="outline" className="rounded-full">
-                  {job.status === "active" ? "Close opening" : "Reopen"}
-                </Button>
-              </form>
+            {canManageJobOpenings(ctx.role) && (
+              <>
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  render={<Link href={`/admin/jobs/${job.id}/edit`}>Edit</Link>}
+                />
+                <form action={toggleJobStatus.bind(null, job.id, job.status === "active" ? "closed" : "active")}>
+                  <Button type="submit" variant="outline" className="rounded-full">
+                    {job.status === "active" ? "Close opening" : "Reopen"}
+                  </Button>
+                </form>
+              </>
             )}
             <Button
               variant="outline"
