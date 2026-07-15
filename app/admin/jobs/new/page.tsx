@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { JobForm } from "@/components/job-form";
 import { PageHeader } from "@/components/page-header";
 import { getOrgContext } from "@/lib/data/org";
+import { canManageJobOpenings } from "@/lib/permissions";
 
 export default async function NewJobOpeningPage() {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
-  if (ctx.role !== "admin") redirect("/admin/dashboard");
+  if (!canManageJobOpenings(ctx.role)) redirect("/admin/dashboard");
 
   return (
     <div className="max-w-2xl space-y-6">

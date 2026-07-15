@@ -36,9 +36,8 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname === "/login" || pathname === "/signup";
   const isAdminRoute = pathname.startsWith("/admin");
-  const isCandidateRoute = pathname.startsWith("/candidate");
   const isProRoute = pathname.startsWith("/pro");
-  const isAppRoute = isAdminRoute || isCandidateRoute || isProRoute;
+  const isAppRoute = isAdminRoute || isProRoute;
 
   const redirectTo = (path: string) => {
     const url = request.nextUrl.clone();
@@ -62,26 +61,18 @@ export async function updateSession(request: NextRequest) {
 
     if (isSuperAdmin) {
       // Super admin only belongs in /pro. Auth routes + tenant sections bounce there.
-      if (isAuthRoute || isAdminRoute || isCandidateRoute) return redirectTo("/pro/dashboard");
+      if (isAuthRoute || isAdminRoute) return redirectTo("/pro/dashboard");
       return response;
     }
 
-    // Non-super-admin hitting /pro → deny (send to their own home below).
-    const { data: membership } = await supabase
-      .from("org_members")
-      .select("role")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const role = membership?.role;
-    const home = role === "candidate" ? "/candidate/dashboard" : "/admin/dashboard";
+    // Org staff (admin | member) all live under /admin.
+    const home = "/admin/dashboard";
 
     // Already logged in, hitting login/signup → send to their home.
     if (isAuthRoute) return redirectTo(home);
 
-    // Non-super-admin in /pro, candidate in admin, or staff in candidate → bounce.
+    // Non-super-admin hitting /pro → bounce to their own section.
     if (isProRoute) return redirectTo(home);
-    if (isAdminRoute && role === "candidate") return redirectTo(home);
-    if (isCandidateRoute && role !== "candidate") return redirectTo(home);
   }
 
   return response;

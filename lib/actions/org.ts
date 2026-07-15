@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrgContext, listOrgMembers } from "@/lib/data/org";
+import { canManageOrgSettings, canManageTeam } from "@/lib/permissions";
 
 export type OrgActionState = { error?: string; success?: string; duplicate?: boolean } | null;
 
@@ -17,7 +18,8 @@ async function siteOrigin(): Promise<string> {
 
 export async function updateOrgName(_prev: OrgActionState, formData: FormData): Promise<OrgActionState> {
   const ctx = await getOrgContext();
-  if (!ctx || ctx.role !== "admin") return { error: "Only org admins can rename the organization." };
+  if (!ctx || !canManageOrgSettings(ctx.role)) return { error: "Only org admins can rename the organization." };
+  if (ctx.suspended) return { error: "Your organization is suspended." };
 
   const name = String(formData.get("org-name") ?? "").trim();
   if (!name) return { error: "Organization name is required." };
@@ -32,7 +34,8 @@ export async function updateOrgName(_prev: OrgActionState, formData: FormData): 
 
 export async function inviteMember(_prev: OrgActionState, formData: FormData): Promise<OrgActionState> {
   const ctx = await getOrgContext();
-  if (!ctx || ctx.role !== "admin") return { error: "Only org admins can invite members." };
+  if (!ctx || !canManageTeam(ctx.role)) return { error: "Only org admins can invite members." };
+  if (ctx.suspended) return { error: "Your organization is suspended." };
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const role = String(formData.get("role") ?? "member");
@@ -105,7 +108,7 @@ export async function inviteMember(_prev: OrgActionState, formData: FormData): P
 
 export async function revokeInvite(inviteId: string) {
   const ctx = await getOrgContext();
-  if (!ctx || ctx.role !== "admin") return;
+  if (!ctx || !canManageTeam(ctx.role) || ctx.suspended) return;
 
   const supabase = await createClient();
   // RLS restricts the update to this admin's own org.

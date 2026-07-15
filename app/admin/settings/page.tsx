@@ -14,11 +14,12 @@ import { PageHeader } from "@/components/page-header";
 import { InviteMemberForm, OrgNameForm } from "@/components/org-settings-forms";
 import { getOrgContext, listOrgMembers, listPendingInvites } from "@/lib/data/org";
 import { revokeInvite } from "@/lib/actions/org";
+import { canManageTeam } from "@/lib/permissions";
 
 export default async function OrgSettingsPage() {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
-  if (ctx.role !== "admin") redirect("/admin/dashboard");
+  if (!canManageTeam(ctx.role)) redirect("/admin/dashboard");
 
   const [members, invites] = await Promise.all([
     listOrgMembers(ctx.orgId),

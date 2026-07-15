@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 import { FREE_TIER_LIMITS, getOrgContext, getOrgUsage } from "@/lib/data/org";
 import { listJobOpenings } from "@/lib/data/jobs";
+import { canManageJobOpenings } from "@/lib/permissions";
 
 export default async function DashboardPage() {
   const ctx = await getOrgContext();
@@ -25,7 +26,7 @@ export default async function DashboardPage() {
         title="Job Openings"
         description="Manage your open roles and screen candidates."
         action={
-          ctx.role === "admin" && (
+          canManageJobOpenings(ctx.role) && (
             <Button
               className="rounded-full px-5"
               disabled={atJobLimit}
@@ -37,7 +38,7 @@ export default async function DashboardPage() {
 
       {ctx.subscriptionTier === "free" && (
         <Card className="rounded-3xl border-transparent bg-secondary">
-          <CardContent className="flex items-center justify-between gap-4 py-5">
+          <CardContent className="flex items-center justify-between gap-4">
             <div className="text-sm text-secondary-foreground">
               <p className="font-semibold">
                 Free plan: {usage.activeJobOpenings}/{FREE_TIER_LIMITS.maxActiveJobOpenings} job openings,{" "}
