@@ -3,15 +3,21 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { LogoutDialog } from "@/components/logout-dialog";
-import { SidebarNav } from "@/components/sidebar-nav";
+import { SidebarNav, type SidebarNavItem } from "@/components/sidebar-nav";
 import { createClient } from "@/lib/supabase/server";
 
-type NavItem = { href: string; label: string; roles: Array<"admin" | "member"> };
+type NavItem = {
+  href: string;
+  label: string;
+  icon: SidebarNavItem["icon"];
+  roles: Array<"admin" | "member">;
+};
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin/dashboard", label: "Job Openings", roles: ["admin", "member"] },
-  { href: "/admin/settings", label: "Org Settings", roles: ["admin"] },
-  { href: "/admin/billing", label: "Billing", roles: ["admin"] },
+  { href: "/admin/dashboard", label: "Dashboard", icon: "dashboard", roles: ["admin", "member"] },
+  { href: "/admin/jobs", label: "Job Openings", icon: "briefcase", roles: ["admin", "member"] },
+  { href: "/admin/settings", label: "Org Information", icon: "settings", roles: ["admin", "member"] },
+  { href: "/admin/billing", label: "Billing", icon: "card", roles: ["admin"] },
 ];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -23,14 +29,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Resolve the caller's org + role (RLS returns only their own membership row).
   const { data: membership } = await supabase
     .from("org_members")
-    .select("role, orgs(name, subscription_tier, suspended_at)")
+    .select("role, orgs(name, subscription_tier, suspended_at, owner_id)")
     .eq("user_id", user?.id ?? "")
     .maybeSingle();
 
   const role = (membership?.role as "admin" | "member") ?? "member";
   const org = membership?.orgs as
-    | { name: string; subscription_tier: string; suspended_at: string | null }
+    | { name: string; subscription_tier: string; suspended_at: string | null; owner_id: string | null }
     | undefined;
+  const isOwner = !!user && org?.owner_id === user.id;
   const email = user?.email ?? "";
   const displayName = (user?.user_metadata?.display_name as string) || "";
   const avatarUrl = (user?.user_metadata?.avatar_url as string) || null;
@@ -59,7 +66,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        <div className="mx-3 mb-3 rounded-2xl bg-muted px-4 py-3">
+        <div className="mx-3 mb-3 rounded-2xl bg-primary-surface px-4 py-3">
           <p className="mb-1 text-xs font-medium text-muted-foreground">Organization</p>
           <div className="flex items-center justify-between gap-2">
             <span className="truncate text-sm font-semibold">{org?.name ?? "No organization"}</span>
@@ -69,9 +76,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        <SidebarNav items={NAV_ITEMS.filter((item) => item.roles.includes(role))} />
+        <SidebarNav
+          items={NAV_ITEMS.filter((item) => item.roles.includes(role)).map((item) =>
+            item.href === "/admin/settings"
+              ? { ...item, label: isOwner ? "Org Settings" : "Org Information" }
+              : item,
+          )}
+        />
 
-        <div className="m-3 space-y-2 rounded-2xl border border-border px-3 py-3">
+        <div className="mx-3 mt-auto mb-3 space-y-3 rounded-2xl border border-border px-3 py-3">
           <Link
             href="/admin/profile"
             className="flex items-center gap-3 rounded-xl px-1 py-1 -mx-1 -my-1 transition-colors hover:bg-muted"
@@ -79,7 +92,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           >
             <Avatar className="size-9">
               {avatarUrl && <AvatarImage src={avatarUrl} alt="Profile photo" />}
-              <AvatarFallback className="bg-muted text-foreground">
+              <AvatarFallback className="bg-primary-fill text-primary-ink">
                 {(displayName || email || "U")[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>

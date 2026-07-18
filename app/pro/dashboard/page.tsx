@@ -20,14 +20,29 @@ export default async function ProDashboardPage() {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {tiles.map(({ label, value, icon: Icon }) => (
-          <Card key={label} className="rounded-3xl">
+        {tiles.map(({ label, value, icon: Icon }, i) => (
+          <Card
+            key={label}
+            className={`rounded-3xl border-transparent ${i === 0 ? "bg-primary" : "bg-primary-surface"}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-              <Icon className="size-4 text-muted-foreground" />
+              <CardTitle
+                className={`text-sm font-medium ${i === 0 ? "text-primary-foreground/80" : "text-muted-foreground"}`}
+              >
+                {label}
+              </CardTitle>
+              <span
+                className={`flex size-8 items-center justify-center rounded-xl ${
+                  i === 0 ? "bg-primary-emphasis text-primary-foreground" : "bg-primary-fill text-primary-ink"
+                }`}
+              >
+                <Icon className="size-4" />
+              </span>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-extrabold tracking-tight">{value}</p>
+              <p className={`text-3xl font-extrabold tracking-tight ${i === 0 ? "text-primary-foreground" : ""}`}>
+                {value}
+              </p>
             </CardContent>
           </Card>
         ))}

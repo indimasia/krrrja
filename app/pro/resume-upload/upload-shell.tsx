@@ -3,8 +3,6 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const MAX_FILES = 10;
-
 // Shell dropzone. Super admins have no org/job scope in the schema, so there is
 // no wired upload target yet — this collects files client-side only.
 export function UploadShell() {
@@ -16,13 +14,13 @@ export function UploadShell() {
     if (!selected) return;
     const pdfs = Array.from(selected).filter((f) => f.type === "application/pdf");
     setError(pdfs.length !== selected.length ? "Only PDF files are accepted." : null);
-    setFiles(pdfs.slice(0, MAX_FILES));
+    setFiles(pdfs);
   }
 
   return (
     <div className="space-y-3">
       <div
-        className="cursor-pointer rounded-2xl border-2 border-dashed border-primary/40 bg-secondary/50 p-10 text-center transition-colors hover:border-primary hover:bg-secondary"
+        className="cursor-pointer rounded-2xl border-2 border-dashed border-primary-emphasis bg-primary-surface p-10 text-center transition-colors duration-200 hover:border-primary-ink hover:bg-primary-fill"
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
@@ -31,7 +29,7 @@ export function UploadShell() {
         }}
       >
         <p className="text-sm font-medium">Drop CV PDFs here or click to browse</p>
-        <p className="mt-1 text-xs text-muted-foreground">PDF only · max {MAX_FILES} files per upload</p>
+        <p className="mt-1 text-xs text-muted-foreground">PDF only · no file limit per upload</p>
         <input
           ref={inputRef}
           type="file"

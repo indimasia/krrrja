@@ -1,20 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { Building2, LayoutDashboard, Briefcase, FileUp, Users, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { LogoutDialog } from "@/components/logout-dialog";
+import { SidebarNav, type SidebarNavItem } from "@/components/sidebar-nav";
 import { createClient } from "@/lib/supabase/server";
 import { isPlatformAdmin } from "@/lib/data/platform";
 
-const NAV_ITEMS = [
-  { href: "/pro/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/pro/orgs", label: "Organizations", icon: Building2 },
-  { href: "/pro/jobs", label: "Jobs", icon: Briefcase },
-  { href: "/pro/resume-upload", label: "Resume Upload", icon: FileUp },
-  { href: "/pro/users", label: "User", icon: Users },
-  { href: "/pro/roles", label: "Role", icon: ShieldCheck },
+const NAV_ITEMS: SidebarNavItem[] = [
+  { href: "/pro/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/pro/orgs", label: "Organizations", icon: "building" },
+  { href: "/pro/jobs", label: "Jobs", icon: "briefcase" },
+  { href: "/pro/resume-upload", label: "Resume Upload", icon: "upload" },
+  { href: "/pro/users", label: "User", icon: "users" },
+  { href: "/pro/roles", label: "Role", icon: "shield" },
 ];
 
 export default async function ProLayout({ children }: { children: React.ReactNode }) {
@@ -39,7 +39,7 @@ export default async function ProLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        <div className="mx-3 mb-3 rounded-2xl bg-muted px-4 py-3">
+        <div className="mx-3 mb-3 rounded-2xl bg-primary-surface px-4 py-3">
           <p className="mb-1 text-xs font-medium text-muted-foreground">Console</p>
           <div className="flex items-center justify-between gap-2">
             <span className="truncate text-sm font-semibold">Super Admin</span>
@@ -47,20 +47,9 @@ export default async function ProLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-2">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <Icon className="size-4 shrink-0" />
-              {label}
-            </Link>
-          ))}
-        </nav>
+        <SidebarNav items={NAV_ITEMS} />
 
-        <div className="m-3 space-y-2 rounded-2xl border border-border px-3 py-3">
+        <div className="mx-3 mt-auto mb-3 space-y-2 rounded-2xl border border-border px-3 py-3">
           <Link
             href="/pro/profile"
             className="flex items-center gap-3 rounded-xl px-1 py-1 -mx-1 -my-1 transition-colors hover:bg-muted"
@@ -68,7 +57,7 @@ export default async function ProLayout({ children }: { children: React.ReactNod
           >
             <Avatar className="size-9">
               {avatarUrl && <AvatarImage src={avatarUrl} alt="Profile photo" />}
-              <AvatarFallback className="bg-muted text-foreground">
+              <AvatarFallback className="bg-primary-fill text-primary-ink">
                 {(displayName || email || "S")[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>

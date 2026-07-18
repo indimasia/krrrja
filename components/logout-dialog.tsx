@@ -1,6 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
+import { LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +24,8 @@ export function LogoutDialog({ className }: { className?: string }) {
     <Dialog>
       <DialogTrigger
         render={
-          <Button type="button" variant="ghost" size="sm" className={className}>
+          <Button type="button" variant="ghost" size="sm" className={cn(className, "hover:bg-destructive/10 hover:text-destructive")}>
+            <LogOut />
             Log out
           </Button>
         }
