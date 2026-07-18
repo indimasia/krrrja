@@ -8,10 +8,10 @@ import { canManageJobOpenings } from "@/lib/permissions";
 export default async function NewJobOpeningPage() {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
-  if (!canManageJobOpenings(ctx.role)) redirect("/admin/dashboard");
+  if (!canManageJobOpenings(ctx.role)) redirect("/admin/jobs");
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="New job opening"
         description="Define the role and screening criteria — AI will rank candidates against this."

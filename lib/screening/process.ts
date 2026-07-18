@@ -73,7 +73,7 @@ async function processOneJob(supabase: ReturnType<typeof createAdminClient>, job
   try {
     const { data: candidate, error: candidateError } = await supabase
       .from("candidates")
-      .select("id, extracted_text, job_openings(title, description, criteria)")
+      .select("id, extracted_text, job_openings(title, description, criteria, requirements, skills)")
       .eq("id", job.candidate_id)
       .single();
 
@@ -83,6 +83,8 @@ async function processOneJob(supabase: ReturnType<typeof createAdminClient>, job
       title: string;
       description: string;
       criteria: string;
+      requirements: string | null;
+      skills: string[] | null;
     } | null;
     if (!opening) throw new Error("Job opening not found for candidate.");
 
@@ -98,7 +100,15 @@ async function processOneJob(supabase: ReturnType<typeof createAdminClient>, job
     const result = await withTimeout(
       scorer.score({
         jobTitle: opening.title,
-        jobDescription: opening.description,
+        // Requirements + skills ride along as secondary context; criteria stays
+        // the primary constraint per the scorer prompt contract.
+        jobDescription: [
+          opening.description,
+          opening.requirements?.trim() ? `Requirements:\n${opening.requirements}` : "",
+          opening.skills?.length ? `Desired skills: ${opening.skills.join(", ")}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n\n"),
         criteria: opening.criteria,
         cvText,
       }),
