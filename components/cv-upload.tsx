@@ -1,46 +1,53 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { uploadCandidates, type UploadState } from "@/lib/actions/candidates";
+import { uploadCandidates } from "@/lib/actions/candidates";
 
-const MAX_FILES = 10;
-
-export function CvUpload({ jobOpeningId }: { jobOpeningId: string }) {
+export function CvUpload({
+  jobOpeningId,
+  onSuccess,
+}: {
+  jobOpeningId: string;
+  onSuccess?: (fileCount: number) => void;
+}) {
   const [files, setFiles] = useState<File[]>([]);
-  const [clientError, setClientError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const boundAction = uploadCandidates.bind(null, jobOpeningId);
-  const [state, formAction, pending] = useActionState<UploadState, FormData>(boundAction, null);
 
   function handleFiles(selected: FileList | null) {
     if (!selected) return;
     const incoming = Array.from(selected).filter((f) => f.type === "application/pdf");
+    setError(incoming.length !== selected.length ? "Only PDF files are accepted." : null);
+    setFiles(incoming);
+  }
 
-    if (incoming.length !== selected.length) {
-      setClientError("Only PDF files are accepted.");
-    } else {
-      setClientError(null);
-    }
+  // The action is called directly (not via useActionState) so the success
+  // branch can hand control back to the caller — the dialog closes and toasts
+  // from here, without an effect watching action state.
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const count = files.length;
+    const formData = new FormData();
+    files.forEach((f) => formData.append("files", f));
 
-    if (incoming.length > MAX_FILES) {
-      setClientError(`Max ${MAX_FILES} files per upload — only the first ${MAX_FILES} were kept.`);
-    }
-
-    setFiles(incoming.slice(0, MAX_FILES));
+    startTransition(async () => {
+      const result = await uploadCandidates(jobOpeningId, null, formData);
+      if (result && "error" in result) {
+        setError(result.error);
+        return;
+      }
+      setFiles([]);
+      setError(null);
+      onSuccess?.(count);
+    });
   }
 
   return (
-    <form
-      action={(formData) => {
-        files.forEach((f) => formData.append("files", f));
-        formAction(formData);
-      }}
-      className="space-y-3"
-    >
+    <form onSubmit={submit} className="space-y-3">
       <div
-        className="cursor-pointer rounded-2xl border-2 border-dashed border-primary/40 bg-secondary/50 p-8 text-center transition-colors hover:border-primary hover:bg-secondary"
+        className="cursor-pointer rounded-2xl border-2 border-dashed border-primary-emphasis bg-primary-surface p-8 text-center transition-colors duration-200 hover:border-primary-ink hover:bg-primary-fill"
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
@@ -49,7 +56,7 @@ export function CvUpload({ jobOpeningId }: { jobOpeningId: string }) {
         }}
       >
         <p className="text-sm font-medium">Drop CV PDFs here or click to browse</p>
-        <p className="text-xs text-muted-foreground mt-1">PDF only · max {MAX_FILES} files per upload</p>
+        <p className="text-xs text-muted-foreground mt-1">PDF only · no file limit per upload</p>
         <input
           ref={inputRef}
           type="file"
@@ -60,11 +67,7 @@ export function CvUpload({ jobOpeningId }: { jobOpeningId: string }) {
         />
       </div>
 
-      {clientError && <p className="text-sm text-destructive">{clientError}</p>}
-      {state && "error" in state && <p className="text-sm text-destructive">{state.error}</p>}
-      {state && "success" in state && (
-        <p className="text-sm text-primary">Uploaded — queued for scoring.</p>
-      )}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {files.length > 0 && (
         <div className="space-y-2">

@@ -49,7 +49,7 @@ export function BatchUploadCard() {
 
   return (
     <div ref={ref} className="relative mx-auto w-full max-w-sm">
-      <div className="absolute inset-0 translate-x-4 translate-y-4 rounded-[2rem] bg-primary/50" aria-hidden />
+      <div className="absolute inset-0 translate-x-4 translate-y-4 rounded-[2rem] bg-primary-emphasis" aria-hidden />
       <div className="relative flex aspect-[4/5] w-full flex-col gap-4 rounded-[2rem] bg-card p-7 shadow-sm">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Batch upload</p>
         <div className="relative flex flex-1 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 border-dashed border-border">
@@ -57,7 +57,7 @@ export function BatchUploadCard() {
           <FileText className="size-8 text-muted-foreground" />
           <p className="text-sm font-semibold">10 PDFs dropped</p>
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className={`hero-pulse-dot inline-block size-1.5 rounded-full ${extracting ? "bg-primary" : "bg-secondary"}`} />
+            <span className={`hero-pulse-dot inline-block size-1.5 rounded-full transition-colors duration-200 ${extracting ? "bg-primary-ink" : "bg-muted-foreground/40"}`} />
             {extracting ? "Extracting text…" : "Scoring against criteria…"}
           </p>
         </div>
@@ -82,7 +82,7 @@ export function BatchUploadCard() {
 
 function ScoredLabel({ score }: { score: number }) {
   const value = useCountUp(score);
-  return <span className="text-secondary-foreground">Scored — {value}</span>;
+  return <span className="text-primary-ink">Scored — {value}</span>;
 }
 
 // Count 0 → target over ~700ms, once, on mount. Respects reduced-motion.
