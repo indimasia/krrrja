@@ -1,30 +1,51 @@
 import "server-only";
+import Stripe from "stripe";
+import { headers } from "next/headers";
 
-// Stripe configuration seam. The SDK is deliberately NOT installed yet —
-// checkout/portal go live in a later step once keys + Pro pricing exist.
-// Everything here is real plumbing that keeps working when that lands:
-// env checks, webhook signature verification (plain HMAC, no SDK needed),
-// and the event types we commit to handling.
+// Stripe integration surface: env checks, the SDK client, the origin used for
+// Checkout/Portal return URLs, webhook signature verification (plain HMAC —
+// no SDK needed), and the event types we commit to handling.
 
 export const STRIPE_ENV_KEYS = {
   secretKey: "STRIPE_SECRET_KEY",
   webhookSecret: "STRIPE_WEBHOOK_SECRET",
-  proPriceId: "STRIPE_PRICE_PRO", // Pro pricing = open product decision
 } as const;
 
+// Pro is a one-time $40 lifetime purchase — the price is built inline at
+// checkout (price_data), so no product/price ID env var is needed.
 export function isStripeConfigured(): boolean {
-  return Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET && process.env.STRIPE_PRICE_PRO);
+  return Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET);
 }
 
-export const HANDLED_EVENT_TYPES = [
-  "invoice.payment_succeeded",
-  "invoice.payment_failed",
-  "customer.subscription.updated",
-  "customer.subscription.deleted",
-  "invoice.upcoming",
-] as const;
+// Lifetime Pro price, in cents. One-time charge, USD.
+export const PRO_PRICE_CENTS = 4000;
 
-export const GRACE_PERIOD_DAYS = 3;
+let cached: Stripe | null = null;
+
+// Throws if unconfigured — every caller gates on isStripeConfigured() first.
+export function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
+  if (!cached) cached = new Stripe(key, { typescript: true });
+  return cached;
+}
+
+// Absolute origin for Checkout/Portal return URLs. NEXT_PUBLIC_SITE_URL wins
+// when set (canonical domain); otherwise derive from the request so local dev
+// and preview deploys work without extra config.
+export async function siteOrigin(): Promise<string> {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured.replace(/\/$/, "");
+
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
+}
+
+// One-time lifetime model: the only event that changes state is Checkout
+// completing. No recurring invoices, no subscription lifecycle, no cancel.
+export const HANDLED_EVENT_TYPES = ["checkout.session.completed"] as const;
 
 // Verifies a Stripe webhook signature header ("t=...,v1=...") against the raw
 // request body. Standard Stripe scheme: HMAC-SHA256 over `${t}.${body}` with

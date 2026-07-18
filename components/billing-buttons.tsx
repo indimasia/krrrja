@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { openCustomerPortal, startProCheckout, type BillingActionState } from "@/lib/actions/billing";
+import { startProCheckout, type BillingActionState } from "@/lib/actions/billing";
 
 export function UpgradeButton() {
   const [state, formAction, pending] = useActionState<BillingActionState, FormData>(
@@ -13,25 +14,33 @@ export function UpgradeButton() {
   return (
     <form action={formAction} className="mt-5 space-y-2">
       <Button type="submit" disabled={pending} className="w-full rounded-full">
-        {pending ? "Starting checkout..." : "Upgrade to Pro"}
+        {pending ? "Starting checkout..." : "Get Pro — $40 lifetime"}
       </Button>
       {state?.error && <p className="text-center text-xs text-destructive">{state.error}</p>}
     </form>
   );
 }
 
-export function ManageSubscriptionButton() {
-  const [state, formAction, pending] = useActionState<BillingActionState, FormData>(
-    async () => openCustomerPortal(),
-    null,
-  );
+// Compact CTA for the dashboard usage banner. Success redirects to Stripe, so
+// there's nothing to render on success — only the failure path needs a surface,
+// and the banner has no room for one, hence the toast.
+export function UpgradeProCta() {
+  const [pending, startTransition] = useTransition();
 
   return (
-    <form action={formAction} className="mt-5 space-y-2">
-      <Button type="submit" variant="outline" disabled={pending} className="w-full rounded-full">
-        {pending ? "Opening portal..." : "Manage subscription"}
-      </Button>
-      {state?.error && <p className="text-center text-xs text-destructive">{state.error}</p>}
-    </form>
+    <Button
+      size="sm"
+      variant="onPrimary"
+      disabled={pending}
+      className="shrink-0 rounded-full"
+      onClick={() =>
+        startTransition(async () => {
+          const result = await startProCheckout();
+          if (result?.error) toast.error(result.error);
+        })
+      }
+    >
+      {pending ? "Starting checkout..." : "Get Pro — $40 lifetime"}
+    </Button>
   );
 }

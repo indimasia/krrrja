@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  GRACE_PERIOD_DAYS,
-  HANDLED_EVENT_TYPES,
-  isStripeConfigured,
-  verifyStripeSignature,
-} from "@/lib/billing/stripe";
+import { HANDLED_EVENT_TYPES, isStripeConfigured, verifyStripeSignature } from "@/lib/billing/stripe";
 
 // Stripe webhook receiver. Fully functional once STRIPE_WEBHOOK_SECRET is set:
-// signature always verified, idempotent by event.id (stripe_events table),
-// subscription state mapped onto orgs. Until keys exist it answers 503 so a
+// signature always verified, idempotent by event.id (stripe_events table).
+// One-time lifetime model — the only event that matters is Checkout completing,
+// which flips the org to Pro permanently. Until keys exist it answers 503 so a
 // misconfigured deploy is loud, not silently dropping events.
 
 type StripeEvent = {
   id: string;
   type: string;
-  data: { object: { customer?: string | null; status?: string | null } };
+  data: { object: { customer?: string | null } };
 };
 
 export async function POST(request: Request) {
@@ -73,43 +69,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  // Cancel → 3-day grace, then limits re-apply (enforced in getOrgContext).
-  const cancelledWithGrace = () => {
-    const grace = new Date();
-    grace.setDate(grace.getDate() + GRACE_PERIOD_DAYS);
-    return { subscription_status: "cancelled", grace_expires_at: grace.toISOString() };
-  };
+  // Checkout completed → lifetime Pro. One-time purchase, so there is no
+  // renewal, no cancel, no downgrade path. subscription_status="lifetime"
+  // records how Pro was granted; grace_expires_at cleared for good measure.
+  const update = { subscription_tier: "pro", subscription_status: "lifetime", grace_expires_at: null };
 
-  let update: Record<string, unknown> | null = null;
-  switch (event.type) {
-    case "invoice.payment_succeeded":
-      update = { subscription_tier: "pro", subscription_status: "active", grace_expires_at: null };
-      break;
-    case "invoice.payment_failed":
-      update = { subscription_status: "past_due" };
-      break;
-    case "customer.subscription.updated": {
-      const status = event.data.object.status ?? "active";
-      if (status === "active" || status === "trialing") {
-        update = { subscription_tier: "pro", subscription_status: "active", grace_expires_at: null };
-      } else if (status === "canceled" || status === "cancelled") {
-        // Cancellation can arrive via .updated as well as .deleted — both must
-        // start the grace window or getOrgContext downgrades immediately.
-        update = cancelledWithGrace();
-      } else {
-        update = { subscription_status: status };
-      }
-      break;
-    }
-    case "customer.subscription.deleted":
-      update = cancelledWithGrace();
-      break;
-    case "invoice.upcoming":
-      // Informational — a place to hook renewal emails later.
-      break;
-  }
-
-  if (update) {
+  {
     const { error: updateError } = await admin.from("orgs").update(update).eq("id", org.id);
     if (updateError) {
       console.error(`[stripe] org update failed for event ${event.id}:`, updateError.message);
