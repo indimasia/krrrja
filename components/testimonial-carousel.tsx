@@ -56,7 +56,7 @@ export function TestimonialCarousel() {
   return (
     <section id="pricing" className="mx-auto max-w-6xl px-4 sm:px-6 pb-20">
       <div
-        className="relative overflow-hidden rounded-[2rem] bg-primary/60 px-6 py-14 text-center sm:px-16"
+        className="relative overflow-hidden rounded-[2rem] bg-primary-fill px-6 py-14 text-center transition-colors duration-200 sm:px-16"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onFocusCapture={() => setPaused(true)}

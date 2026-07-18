@@ -60,12 +60,12 @@ export function HeroVisual() {
     >
       {/* Decorative orbiting dots — slowest depth layer */}
       <span
-        className="hero-orbit absolute -left-3 top-4 size-3 rounded-full bg-destructive"
+        className="hero-orbit absolute -left-3 top-4 size-3 rounded-full bg-primary-ink"
         aria-hidden
         style={{ transform: `translate(${tilt.x * -6}px, ${tilt.y * -6}px)` }}
       />
       <span
-        className="hero-orbit-reverse absolute -right-2 top-16 size-4 rounded-full bg-secondary"
+        className="hero-orbit-reverse absolute -right-2 top-16 size-4 rounded-full bg-primary-emphasis"
         aria-hidden
         style={{ transform: `translate(${tilt.x * -10}px, ${tilt.y * -10}px)` }}
       />
@@ -90,30 +90,30 @@ export function HeroVisual() {
 
       {/* Floating stat cards — nearest depth layer, drift opposite the pointer */}
       <div
-        className="absolute left-1 top-6 flex items-center gap-2 rounded-2xl bg-card px-4 py-3 shadow-md transition-transform duration-200 ease-out sm:-left-6 sm:top-8"
+        className="glass absolute left-1 top-6 flex items-center gap-2 rounded-2xl px-4 py-3 transition-transform duration-200 ease-out sm:-left-6 sm:top-8"
         style={{ transform: `translate(${tilt.x * 14}px, ${tilt.y * 14}px)` }}
       >
-        <LineChart className="size-5 text-primary-foreground" />
+        <LineChart className="size-5 text-primary-ink" />
         <div>
           <p className="text-sm font-bold leading-none">20K+</p>
           <p className="text-xs text-muted-foreground">CVs screened</p>
         </div>
       </div>
       <div
-        className="absolute right-1 bottom-16 flex items-center gap-2 rounded-2xl bg-card px-4 py-3 shadow-md transition-transform duration-200 ease-out sm:-right-5"
+        className="glass absolute right-1 bottom-16 flex items-center gap-2 rounded-2xl px-4 py-3 transition-transform duration-200 ease-out sm:-right-5"
         style={{ transform: `translate(${tilt.x * 18}px, ${tilt.y * 18}px)` }}
       >
-        <FileText className="size-5 text-primary-foreground" />
+        <FileText className="size-5 text-primary-ink" />
         <div>
           <p className="text-sm font-bold leading-none">140+</p>
           <p className="text-xs text-muted-foreground">Teams hiring</p>
         </div>
       </div>
       <div
-        className="absolute bottom-1 right-8 flex items-center gap-2 rounded-full bg-card px-4 py-2 shadow-md transition-transform duration-200 ease-out sm:-bottom-4 sm:right-10"
+        className="glass absolute bottom-1 right-8 flex items-center gap-2 rounded-full px-4 py-2 transition-transform duration-200 ease-out sm:-bottom-4 sm:right-10"
         style={{ transform: `translate(${tilt.x * 10}px, ${tilt.y * 10}px)` }}
       >
-        <ShieldCheck className="size-4 text-primary-foreground" />
+        <ShieldCheck className="size-4 text-primary-ink" />
         <span className="text-xs font-semibold">100% human-decided</span>
       </div>
     </div>

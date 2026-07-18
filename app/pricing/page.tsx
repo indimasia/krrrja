@@ -2,17 +2,18 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Check, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Reveal } from "@/components/marketing/reveal";
 import { SiteNav } from "@/components/marketing/site-nav";
 import { SiteFooter } from "@/components/marketing/site-footer";
 
 export const metadata: Metadata = {
   title: "Pricing — Krrrja",
-  description: "Start free with 3 job openings and 20 CVs a month. Upgrade to Pro for unlimited screening.",
+  description: "Start free with 3 job openings and 1 CV a month. Upgrade to Pro for unlimited screening.",
 };
 
 const FREE = [
   { label: "3 active job openings", included: true },
-  { label: "20 CVs processed / month", included: true },
+  { label: "1 CV processed / month", included: true },
   { label: "AI scoring, summaries & red flags", included: true },
   { label: "Ranked candidate dashboard", included: true },
   { label: "Notes & candidate status", included: true },
@@ -77,23 +78,30 @@ export default function PricingPage() {
     <div className="flex-1 bg-background">
       <SiteNav />
 
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-4 pt-12 pb-14 text-center sm:px-6">
-        <span className="inline-block rounded-full bg-secondary px-4 py-1.5 text-sm font-semibold text-secondary-foreground">
-          Pricing
-        </span>
-        <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
-          Start free. Upgrade when the pile grows.
-        </h1>
-        <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-          Two plans, no surprises. Every plan keeps the hiring decision human.
-        </p>
+      {/* Hero — full-bleed blue band, concentric-circle design */}
+      <section className="relative overflow-hidden rounded-b-[2.5rem] bg-primary sm:rounded-b-[3rem]">
+        <div aria-hidden className="absolute -bottom-40 -left-32 size-[26rem] rounded-full bg-primary-fill" />
+        <div aria-hidden className="absolute -bottom-24 -left-16 size-72 rounded-full bg-primary-surface" />
+        <div aria-hidden className="absolute -right-16 top-8 size-40 rounded-full border-[1.25rem] border-primary-emphasis" />
+        <div className="relative mx-auto max-w-6xl px-4 pt-14 pb-16 text-center sm:px-6 lg:pt-20 lg:pb-20">
+          <Reveal>
+            <span className="inline-block rounded-full bg-primary-surface px-4 py-1.5 text-sm font-semibold text-primary-ink transition-colors duration-200">
+              Pricing
+            </span>
+            <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
+              Start free. Upgrade when the pile grows.
+            </h1>
+            <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-foreground/70">
+              Two plans, no surprises. Every plan keeps the hiring decision human.
+            </p>
+          </Reveal>
+        </div>
       </section>
 
       {/* Plans */}
-      <section className="mx-auto max-w-4xl px-4 sm:px-6 pb-16">
+      <section className="mx-auto max-w-4xl px-4 sm:px-6 py-16">
         <div className="grid gap-6 sm:grid-cols-2">
-          <div className="flex flex-col gap-6 rounded-[2rem] border border-border bg-card p-8">
+          <div className="glass glass-flash flex flex-col gap-6 rounded-[2rem] p-8">
             <div>
               <h2 className="text-xl font-bold tracking-tight">Free</h2>
               <p className="mt-1 text-sm text-muted-foreground">For your first openings</p>
@@ -103,8 +111,8 @@ export default function PricingPage() {
             <Button size="lg" variant="outline" className="mt-auto h-12 rounded-full" render={<Link href="/signup">Start free</Link>} />
           </div>
 
-          <div className="relative flex flex-col gap-6 rounded-[2rem] bg-primary/70 p-8">
-            <span className="absolute right-6 top-6 rounded-full bg-background/70 px-3 py-1 text-xs font-bold">
+          <div className="glass-flash relative flex flex-col gap-6 rounded-[2rem] bg-primary-fill p-8 shadow-[0_12px_32px_-16px_oklch(0.52_0.13_245/0.35)] transition-colors duration-200">
+            <span className="absolute right-6 top-6 rounded-full bg-primary-surface px-3 py-1 text-xs font-bold text-primary-ink transition-colors duration-200">
               Most popular
             </span>
             <div>
@@ -113,7 +121,7 @@ export default function PricingPage() {
               <p className="mt-4 text-4xl font-extrabold tracking-tight">Early access<span className="block text-base font-medium text-foreground/70">pricing announced at launch</span></p>
             </div>
             <PlanList items={PRO} />
-            <Button size="lg" className="mt-auto h-12 rounded-full" render={<Link href="/signup">Start free, upgrade in-app</Link>} />
+            <Button size="lg" variant="onPrimary" className="mt-auto h-12 rounded-full" render={<Link href="/signup">Start free, upgrade in-app</Link>} />
           </div>
         </div>
       </section>
@@ -123,7 +131,7 @@ export default function PricingPage() {
         <h2 className="mb-8 text-center text-3xl font-extrabold tracking-tight">Common questions</h2>
         <div className="grid gap-5 sm:grid-cols-2">
           {FAQ.map((f) => (
-            <div key={f.q} className="rounded-3xl border border-border bg-card p-7">
+            <div key={f.q} className="glass glass-flash rounded-3xl p-7">
               <h3 className="mb-2 text-base font-bold tracking-tight">{f.q}</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">{f.a}</p>
             </div>

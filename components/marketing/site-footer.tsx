@@ -19,7 +19,6 @@ export function SiteFooter() {
             <li><Link href="/features" className="hover:text-background">Features</Link></li>
             <li><Link href="/how-it-works" className="hover:text-background">How it works</Link></li>
             <li><Link href="/pricing" className="hover:text-background">Pricing</Link></li>
-            <li><Link href="/roles" className="hover:text-background">Find Jobs</Link></li>
           </ul>
         </div>
         <div>

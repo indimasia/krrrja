@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 
 const LINKS = [
   { href: "/how-it-works", label: "How it works" },
-  { href: "/roles", label: "Find Jobs" },
   { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
@@ -33,7 +32,11 @@ export function SiteNav() {
   }, [open]);
 
   return (
-    <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-6 sm:py-6">
+    <>
+    {/* backdrop-blur creates a containing block for fixed descendants, so the
+        mobile drawer lives OUTSIDE the header as a sibling. */}
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
       <Link href="/" className="flex shrink-0 items-center gap-2">
         <Image src="/logo_2.png" alt="Krrrja" width={36} height={36} className="size-9 rounded-xl" priority />
         <span className="text-lg font-bold tracking-tight">Krrrja</span>
@@ -73,6 +76,8 @@ export function SiteNav() {
           <Menu className="size-5" />
         </Button>
       </div>
+      </div>
+    </header>
 
       {/* Mobile sidebar drawer */}
       <div
@@ -114,7 +119,7 @@ export function SiteNav() {
                 onClick={() => setOpen(false)}
                 className={`rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
                   pathname === l.href
-                    ? "bg-primary/30 font-semibold text-foreground"
+                    ? "bg-primary-surface font-semibold text-primary-ink"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
@@ -129,6 +134,6 @@ export function SiteNav() {
           </div>
         </aside>
       </div>
-    </header>
+    </>
   );
 }

@@ -16,8 +16,10 @@ const POOL: Candidate[] = [
 
 const INITIAL_COUNT = 3;
 
+// Mirrors lib/candidate-score.ts. Amber stays a semantic warn signal — it is
+// exempt from the one-hue-per-section rule, as are the neutrals.
 function scoreTint(score: number) {
-  if (score >= 85) return "bg-secondary text-secondary-foreground";
+  if (score >= 85) return "bg-primary-ink text-background";
   if (score >= 60) return "bg-amber-100 text-amber-800";
   return "bg-muted text-muted-foreground";
 }
@@ -97,11 +99,11 @@ export function HeroPreview() {
 
   return (
     <div className="relative">
-      <div className="hero-float rounded-[2rem] bg-secondary p-6 sm:p-8">
+      <div className="hero-float rounded-[2rem] bg-primary-emphasis p-6 sm:p-8 transition-colors duration-200">
         <div className="rounded-3xl bg-card p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <p className="font-bold tracking-tight">Senior Backend Engineer</p>
-            <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
+            <span className="rounded-full bg-primary-surface px-3 py-1 text-xs font-semibold text-primary-ink transition-colors duration-200">
               8 candidates
             </span>
           </div>

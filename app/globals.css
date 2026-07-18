@@ -35,6 +35,14 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-surface: var(--primary-surface);
+  --color-primary-fill: var(--primary-fill);
+  --color-primary-emphasis: var(--primary-emphasis);
+  --color-primary-ink: var(--primary-ink);
+  --color-secondary-surface: var(--secondary-surface);
+  --color-secondary-fill: var(--secondary-fill);
+  --color-secondary-emphasis: var(--secondary-emphasis);
+  --color-secondary-ink: var(--secondary-ink);
   --color-brand-strong: var(--brand-strong);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -60,14 +68,27 @@
   --popover-foreground: oklch(0.27 0.03 250);
   --primary: oklch(0.903 0.052 242.2);
   --primary-foreground: oklch(0.28 0.04 250);
+  /* Blue shade scale (hue 242). A section painted in one of these may only nest
+     other steps of the SAME scale — never a peach step. See DESIGN_GUIDE.md. */
+  --primary-surface: oklch(0.955 0.024 242.2);
+  --primary-fill: oklch(0.932 0.04 242.2);
+  --primary-emphasis: oklch(0.83 0.082 242.2);
+  --primary-ink: oklch(0.52 0.13 245);
   /* Deeper shade of the brand blue for text on light bg (readable contrast). */
   --brand-strong: oklch(0.52 0.13 245);
   --secondary: oklch(0.919 0.052 60.5);
   --secondary-foreground: oklch(0.34 0.055 55);
+  /* Peach shade scale (hue 60). Mirror of the blue scale above. */
+  --secondary-surface: oklch(0.966 0.024 60.5);
+  --secondary-fill: oklch(0.945 0.04 60.5);
+  --secondary-emphasis: oklch(0.85 0.085 60.5);
+  --secondary-ink: oklch(0.44 0.09 55);
   --muted: oklch(0.95 0.008 250);
   --muted-foreground: oklch(0.52 0.025 250);
-  --accent: oklch(0.919 0.052 60.5);
-  --accent-foreground: oklch(0.34 0.055 55);
+  /* Accent = hover/highlight tint. Blue, not peach — peach is reserved for
+     cancel/warn surfaces only. */
+  --accent: oklch(0.955 0.024 242.2);
+  --accent-foreground: oklch(0.28 0.04 250);
   --destructive: oklch(0.577 0.15 30);
   --border: oklch(0.9 0.008 250);
   --input: oklch(0.9 0.008 250);
@@ -82,8 +103,8 @@
   --sidebar-foreground: oklch(0.27 0.03 250);
   --sidebar-primary: oklch(0.903 0.052 242.2);
   --sidebar-primary-foreground: oklch(0.28 0.04 250);
-  --sidebar-accent: oklch(0.919 0.052 60.5);
-  --sidebar-accent-foreground: oklch(0.34 0.055 55);
+  --sidebar-accent: oklch(0.955 0.024 242.2);
+  --sidebar-accent-foreground: oklch(0.28 0.04 250);
   --sidebar-border: oklch(0.9 0.008 250);
   --sidebar-ring: oklch(0.7 0.11 242);
 }
@@ -97,13 +118,23 @@
   --popover-foreground: oklch(0.96 0.006 250);
   --primary: oklch(0.8 0.09 242);
   --primary-foreground: oklch(0.2 0.03 250);
+  /* Dark mode inverts the scale: surface/fill are dark tints of the hue that sit
+     UNDER the light --primary, so nesting still reads as same-hue shade steps. */
+  --primary-surface: oklch(0.3 0.03 242);
+  --primary-fill: oklch(0.36 0.05 242);
+  --primary-emphasis: oklch(0.68 0.1 242);
+  --primary-ink: oklch(0.86 0.1 242);
   --brand-strong: oklch(0.82 0.11 242);
   --secondary: oklch(0.4 0.06 55);
   --secondary-foreground: oklch(0.93 0.04 60);
+  --secondary-surface: oklch(0.3 0.028 55);
+  --secondary-fill: oklch(0.35 0.045 55);
+  --secondary-emphasis: oklch(0.5 0.075 55);
+  --secondary-ink: oklch(0.93 0.04 60);
   --muted: oklch(0.3 0.02 250);
   --muted-foreground: oklch(0.72 0.02 250);
-  --accent: oklch(0.4 0.06 55);
-  --accent-foreground: oklch(0.93 0.04 60);
+  --accent: oklch(0.36 0.05 242);
+  --accent-foreground: oklch(0.96 0.006 250);
   --destructive: oklch(0.7 0.15 30);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -117,8 +148,8 @@
   --sidebar-foreground: oklch(0.96 0.006 250);
   --sidebar-primary: oklch(0.8 0.09 242);
   --sidebar-primary-foreground: oklch(0.2 0.03 250);
-  --sidebar-accent: oklch(0.4 0.06 55);
-  --sidebar-accent-foreground: oklch(0.93 0.04 60);
+  --sidebar-accent: oklch(0.36 0.05 242);
+  --sidebar-accent-foreground: oklch(0.96 0.006 250);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.8 0.09 242);
 }
@@ -194,6 +225,78 @@
   animation: carousel-progress linear forwards;
 }
 
+/* ── Liquid glass ────────────────────────────────────────────────────────
+   Translucent card that blurs whatever sits behind it (band tints, blobs).
+   `.glass` = surface; `.glass-flash` = diagonal sheen sweep on hover.
+   Neutral white-based, so it is hue-exempt and legal inside any band. */
+.glass {
+  position: relative;
+  background: color-mix(in oklab, var(--card) 55%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in oklab, var(--card) 75%, transparent);
+  box-shadow:
+    0 12px 32px -16px oklch(0.52 0.13 245 / 0.28),
+    inset 0 1px 0 oklch(1 0 0 / 0.55);
+}
+.dark .glass {
+  background: color-mix(in oklab, var(--card) 50%, transparent);
+  border-color: oklch(1 0 0 / 0.12);
+  box-shadow:
+    0 12px 32px -16px oklch(0 0 0 / 0.5),
+    inset 0 1px 0 oklch(1 0 0 / 0.08);
+}
+
+.glass-flash {
+  position: relative;
+  overflow: hidden;
+}
+.glass-flash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    oklch(1 0 0 / 0.45) 50%,
+    transparent 65%
+  );
+  transform: translateX(-150%);
+  transition: none;
+}
+.glass-flash:hover::before {
+  transform: translateX(150%);
+  transition: transform 0.9s ease;
+}
+.dark .glass-flash::before {
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    oklch(1 0 0 / 0.14) 50%,
+    transparent 65%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-flash::before {
+    display: none;
+  }
+}
+
+/* ── Scroll reveal (components/marketing/reveal.tsx) ─────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-float,
   .hero-pulse-dot,
@@ -202,5 +305,10 @@
   .hero-orbit-reverse,
   .hero-scan {
     animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
