@@ -2,20 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrgContext, listOrgMembers } from "@/lib/data/org";
 import { canManageOrgSettings, canManageTeam, canDeleteOrg } from "@/lib/permissions";
+import { siteOrigin } from "@/lib/site-url";
 
 export type OrgActionState = { error?: string; success?: string; duplicate?: boolean } | null;
-
-async function siteOrigin(): Promise<string> {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? "http";
-  return `${proto}://${host}`;
-}
 
 export async function updateOrgName(_prev: OrgActionState, formData: FormData): Promise<OrgActionState> {
   const ctx = await getOrgContext();

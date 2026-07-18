@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isPlatformAdmin } from "@/lib/data/platform";
+import { siteOrigin } from "@/lib/site-url";
 
 export type AuthState = { error: string } | null;
 
@@ -82,12 +83,19 @@ export async function signUpCreateOrg(_prev: AuthState, formData: FormData): Pro
   if (password !== confirmPassword) return { error: "Passwords do not match." };
 
   const supabase = await createClient();
+  const origin = await siteOrigin();
   // pending_org_name survives the email-confirmation detour: if there's no
   // session now, ensureOrgFromSignup() creates the org on first login/callback.
+  // emailRedirectTo points the confirmation link back at this deploy's origin
+  // (prod domain via NEXT_PUBLIC_SITE_URL) instead of the Supabase Site URL,
+  // which would otherwise send every confirmation to localhost.
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { pending_org_name: orgName, display_name: name } },
+    options: {
+      data: { pending_org_name: orgName, display_name: name },
+      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/admin/dashboard")}`,
+    },
   });
   if (error) return { error: error.message };
 

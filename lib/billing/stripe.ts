@@ -1,6 +1,8 @@
 import "server-only";
 import Stripe from "stripe";
-import { headers } from "next/headers";
+import { siteOrigin } from "@/lib/site-url";
+
+export { siteOrigin };
 
 // Stripe integration surface: env checks, the SDK client, the origin used for
 // Checkout/Portal return URLs, webhook signature verification (plain HMAC —
@@ -33,16 +35,6 @@ export function getStripe(): Stripe {
 // Absolute origin for Checkout/Portal return URLs. NEXT_PUBLIC_SITE_URL wins
 // when set (canonical domain); otherwise derive from the request so local dev
 // and preview deploys work without extra config.
-export async function siteOrigin(): Promise<string> {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configured) return configured.replace(/\/$/, "");
-
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
-
 // One-time lifetime model: the only event that changes state is Checkout
 // completing. No recurring invoices, no subscription lifecycle, no cancel.
 export const HANDLED_EVENT_TYPES = ["checkout.session.completed"] as const;
