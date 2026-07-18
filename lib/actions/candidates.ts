@@ -8,8 +8,6 @@ import { processPendingJobs } from "@/lib/screening/process";
 import { FREE_TIER_LIMITS, getOrgContext, getOrgUsage } from "@/lib/data/org";
 import { canUpdateCandidate, canUploadCV } from "@/lib/permissions";
 
-const MAX_FILES = 10;
-
 export type UploadState = { error: string } | { success: true } | null;
 
 export async function uploadCandidates(jobOpeningId: string, _prev: UploadState, formData: FormData): Promise<UploadState> {
@@ -31,7 +29,6 @@ export async function uploadCandidates(jobOpeningId: string, _prev: UploadState,
 
   const files = formData.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
   if (files.length === 0) return { error: "No files selected." };
-  if (files.length > MAX_FILES) return { error: `Max ${MAX_FILES} files per upload.` };
   if (files.some((f) => f.type !== "application/pdf")) return { error: "Only PDF files are accepted." };
 
   if (ctx.subscriptionTier === "free") {

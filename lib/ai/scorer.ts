@@ -1,6 +1,7 @@
 // AI scoring provider seam. The worker (lib/screening/process.ts) only knows
-// this interface — swapping mock → OpenAI gpt-4o later means adding a provider
-// here and setting AI_PROVIDER=openai + OPENAI_API_KEY. No worker changes.
+// this interface. Providers: "mock" (deterministic heuristic, no key) and
+// "openrouter" (OpenAI-compatible chat completions — set AI_PROVIDER=openrouter
+// + OPENROUTER_API_KEY, optionally OPENROUTER_MODEL / OPENROUTER_BASE_URL).
 
 export type ScoreResult = {
   score: number; // integer 0-100
@@ -85,6 +86,107 @@ const mockScorer: Scorer = {
   },
 };
 
+// ── OpenRouter provider ──────────────────────────────────────────────────
+// OpenAI-compatible /chat/completions over fetch — no SDK dependency. The
+// model must return the strict JSON contract; anything else throws and the
+// worker's retry path (max 3 attempts) kicks in.
+
+// Keeps prompt size bounded for long CVs; the head of a CV carries the signal
+// (contact, experience, skills), so plain truncation is fine for MVP.
+const MAX_CV_CHARS = 24_000;
+
+const SYSTEM_PROMPT = `You are a CV screening assistant. You compare one candidate CV against a job opening and return a strict JSON assessment.
+
+Rules:
+- Treat the stated criteria as the primary constraint; the job description is secondary context.
+- Do not infer facts absent from the CV text. If something is not stated, it does not count.
+- Use neutral language. Avoid inferring or mentioning sensitive attributes (age, gender, ethnicity, religion, health, etc.).
+- red_flags are concrete, evidence-based concerns (e.g. unexplained gaps, missing must-have criteria), not speculation.
+
+Respond with JSON only — no prose, no markdown fences. Exact shape:
+{"score": <integer 0-100>, "summary": [<string>, <string>, <string>], "red_flags": [<string>, ...]}
+"summary" must be exactly 3 short bullets. "red_flags" may be empty.`;
+
+function extractJson(text: string): unknown {
+  // Models sometimes wrap output in ```json fences or lead with prose despite
+  // instructions — recover the first top-level object instead of failing.
+  const cleaned = text.replace(/```(?:json)?/gi, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end <= start) throw new Error("Scorer output contains no JSON object.");
+  return JSON.parse(cleaned.slice(start, end + 1));
+}
+
+const openRouterScorer: Scorer = {
+  name: "openrouter",
+  async score({ jobTitle, jobDescription, criteria, cvText }) {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) throw new Error("OPENROUTER_API_KEY is not set.");
+    const baseUrl = (process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api/v1").replace(/\/$/, "");
+    const model = process.env.OPENROUTER_MODEL ?? "tencent/hy3:free";
+
+    const userPrompt = [
+      `Job title: ${jobTitle}`,
+      `Job description:\n${jobDescription}`,
+      `Criteria (primary constraint):\n${criteria}`,
+      `CV text:\n${cvText.slice(0, MAX_CV_CHARS)}`,
+    ].join("\n\n");
+
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        // Note: not every OpenRouter model supports json_schema (tencent/hy3
+        // does, and rejects plain json_object). validateScoreResult remains
+        // the real gate either way.
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "cv_score",
+            strict: true,
+            schema: {
+              type: "object",
+              additionalProperties: false,
+              required: ["score", "summary", "red_flags"],
+              properties: {
+                score: { type: "integer", minimum: 0, maximum: 100 },
+                summary: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 3 },
+                red_flags: { type: "array", items: { type: "string" } },
+              },
+            },
+          },
+        },
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+
+    if (!res.ok) {
+      // Body often carries the useful detail (rate limit, invalid model);
+      // logged by the worker, never stored user-facing.
+      const body = await res.text().catch(() => "");
+      throw new Error(`OpenRouter request failed (${res.status}): ${body.slice(0, 500)}`);
+    }
+
+    const data = (await res.json()) as {
+      choices?: { message?: { content?: string } }[];
+      error?: { message?: string };
+    };
+    if (data.error?.message) throw new Error(`OpenRouter error: ${data.error.message}`);
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new Error("OpenRouter response has no message content.");
+
+    return validateScoreResult(extractJson(content));
+  },
+};
+
 // ── Provider selection ───────────────────────────────────────────────────
 
 export function getScorer(): Scorer {
@@ -92,10 +194,8 @@ export function getScorer(): Scorer {
   switch (provider) {
     case "mock":
       return mockScorer;
-    case "openai":
-      // Deliberate: OpenAI integration is a later build step (needs SDK + key).
-      // Failing loudly beats silently mock-scoring real customer data.
-      throw new Error("AI_PROVIDER=openai is not implemented yet. Unset AI_PROVIDER or use 'mock'.");
+    case "openrouter":
+      return openRouterScorer;
     default:
       throw new Error(`Unknown AI_PROVIDER "${provider}".`);
   }

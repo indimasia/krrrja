@@ -41,7 +41,7 @@ export function CvScoreCard() {
 
   return (
     <div ref={ref} className="relative mx-auto w-full max-w-sm">
-      <div className="absolute inset-0 -translate-x-4 translate-y-4 rounded-[2rem] bg-secondary" aria-hidden />
+      <div className="absolute inset-0 -translate-x-4 translate-y-4 rounded-[2rem] bg-primary-emphasis" aria-hidden />
       <div className="relative flex aspect-[4/5] w-full flex-col justify-between rounded-[2rem] bg-card p-7 shadow-sm">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">CV score</p>
@@ -74,7 +74,7 @@ export function CvScoreCard() {
         </div>
       </div>
       <div className="hero-float absolute bottom-6 left-2 flex items-center gap-2 rounded-full bg-card px-4 py-2 shadow-md">
-        <ShieldCheck className="size-4 text-primary-foreground" />
+        <ShieldCheck className="size-4 text-primary-ink" />
         <span className="text-xs font-semibold">100% human-decided</span>
       </div>
     </div>
