@@ -1,11 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrgContext, listOrgMembers } from "@/lib/data/org";
-import { canManageOrgSettings, canManageTeam } from "@/lib/permissions";
+import { canManageOrgSettings, canManageTeam, canDeleteOrg } from "@/lib/permissions";
 
 export type OrgActionState = { error?: string; success?: string; duplicate?: boolean } | null;
 
@@ -18,7 +19,7 @@ async function siteOrigin(): Promise<string> {
 
 export async function updateOrgName(_prev: OrgActionState, formData: FormData): Promise<OrgActionState> {
   const ctx = await getOrgContext();
-  if (!ctx || !canManageOrgSettings(ctx.role)) return { error: "Only org admins can rename the organization." };
+  if (!ctx || !canManageOrgSettings(ctx.isOwner)) return { error: "Only the org owner can rename the organization." };
   if (ctx.suspended) return { error: "Your organization is suspended." };
 
   const name = String(formData.get("org-name") ?? "").trim();
@@ -30,6 +31,17 @@ export async function updateOrgName(_prev: OrgActionState, formData: FormData): 
 
   revalidatePath("/admin", "layout");
   return { success: "Organization name updated." };
+}
+
+export async function deleteOrg(_prev: OrgActionState, _formData: FormData): Promise<OrgActionState> {
+  const ctx = await getOrgContext();
+  if (!ctx || !canDeleteOrg(ctx.isOwner)) return { error: "Only the org owner can delete the organization." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("orgs").delete().eq("id", ctx.orgId);
+  if (error) return { error: error.message };
+
+  redirect("/login");
 }
 
 export async function inviteMember(_prev: OrgActionState, formData: FormData): Promise<OrgActionState> {

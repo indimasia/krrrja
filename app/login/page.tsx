@@ -28,10 +28,10 @@ function LoginForm() {
       <div className="grid w-full max-w-4xl overflow-hidden rounded-[2rem] border border-border bg-card shadow-sm duration-500 animate-in fade-in slide-in-from-bottom-4 lg:grid-cols-2">
         {/* Brand panel */}
         <div className="hidden flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex w-fit items-center gap-2 rounded-xl transition-opacity hover:opacity-80">
             <Image src="/logo_2.png" alt="Krrrja" width={36} height={36} className="size-9 rounded-xl" priority />
             <span className="text-lg font-bold tracking-tight">Krrrja</span>
-          </div>
+          </Link>
           <div>
             <h2 className="text-3xl font-extrabold leading-tight tracking-tight">
               Screen more CVs in less time.

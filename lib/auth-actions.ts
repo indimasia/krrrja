@@ -71,11 +71,15 @@ export async function login(_prev: AuthState, formData: FormData): Promise<AuthS
 }
 
 export async function signUpCreateOrg(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const name = String(formData.get("name") ?? "").trim();
   const orgName = String(formData.get("org-name") ?? "").trim();
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirm-password") ?? "");
 
+  if (!name) return { error: "Name is required." };
   if (!orgName) return { error: "Organization name is required." };
+  if (password !== confirmPassword) return { error: "Passwords do not match." };
 
   const supabase = await createClient();
   // pending_org_name survives the email-confirmation detour: if there's no
@@ -83,7 +87,7 @@ export async function signUpCreateOrg(_prev: AuthState, formData: FormData): Pro
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { pending_org_name: orgName } },
+    options: { data: { pending_org_name: orgName, display_name: name } },
   });
   if (error) return { error: error.message };
 

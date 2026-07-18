@@ -3,13 +3,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const FREE_TIER_LIMITS = {
   maxActiveJobOpenings: 3,
-  maxCvPerMonth: 20,
+  maxCvPerMonth: 1,
 };
 
 export type OrgContext = {
   userId: string;
   orgId: string;
   role: "admin" | "member";
+  isOwner: boolean;
+  ownerId: string | null;
   orgName: string;
   subscriptionTier: "free" | "pro";
   suspended: boolean;
@@ -25,7 +27,7 @@ export async function getOrgContext(): Promise<OrgContext | null> {
 
   const { data: membership } = await supabase
     .from("org_members")
-    .select("org_id, role, orgs(name, subscription_tier, subscription_status, grace_expires_at, suspended_at)")
+    .select("org_id, role, orgs(name, subscription_tier, suspended_at, owner_id)")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -33,27 +35,20 @@ export async function getOrgContext(): Promise<OrgContext | null> {
   const org = membership.orgs as unknown as {
     name: string;
     subscription_tier: string;
-    subscription_status: string | null;
-    grace_expires_at: string | null;
     suspended_at: string | null;
+    owner_id: string | null;
   };
 
-  // Effective tier: a cancelled Pro subscription keeps Pro through the 3-day
-  // grace window (grace_expires_at set by the Stripe webhook), then reverts to
-  // Free limits without waiting for a webhook or manual downgrade.
-  let tier = (org.subscription_tier as "free" | "pro") ?? "free";
-  if (
-    tier === "pro" &&
-    org.subscription_status === "cancelled" &&
-    (!org.grace_expires_at || new Date(org.grace_expires_at).getTime() <= Date.now())
-  ) {
-    tier = "free";
-  }
+  // Pro is a one-time lifetime purchase — no cancel, no grace, no downgrade.
+  // The tier column is the whole story.
+  const tier = (org.subscription_tier as "free" | "pro") ?? "free";
 
   return {
     userId: user.id,
     orgId: membership.org_id,
     role: membership.role as "admin" | "member",
+    isOwner: org.owner_id === user.id,
+    ownerId: org.owner_id,
     orgName: org.name,
     subscriptionTier: tier,
     suspended: org.suspended_at !== null,
@@ -63,6 +58,8 @@ export async function getOrgContext(): Promise<OrgContext | null> {
 export type OrgMember = {
   userId: string;
   email: string;
+  name: string | null;
+  avatarUrl: string | null;
   role: "admin" | "member";
   joinedAt: string;
 };
@@ -81,14 +78,19 @@ export async function listOrgMembers(orgId: string): Promise<OrgMember[]> {
     admin.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
-  const emailById = new Map((authList?.users ?? []).map((u) => [u.id, u.email ?? ""]));
+  const userById = new Map((authList?.users ?? []).map((u) => [u.id, u]));
 
-  return (members ?? []).map((m) => ({
-    userId: m.user_id,
-    email: emailById.get(m.user_id) ?? "—",
-    role: m.role as OrgMember["role"],
-    joinedAt: m.created_at,
-  }));
+  return (members ?? []).map((m) => {
+    const u = userById.get(m.user_id);
+    return {
+      userId: m.user_id,
+      email: u?.email ?? "—",
+      name: (u?.user_metadata?.display_name as string | undefined) ?? null,
+      avatarUrl: (u?.user_metadata?.avatar_url as string | undefined) ?? null,
+      role: m.role as OrgMember["role"],
+      joinedAt: m.created_at,
+    };
+  });
 }
 
 export type PendingInvite = {

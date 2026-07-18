@@ -128,7 +128,7 @@ export default async function InvitePage({
         {(ROLE_GRANTS[invite.role] ?? ROLE_GRANTS.member).map((grant) => (
           <li key={grant} className="flex items-start gap-2.5 text-sm">
             <svg
-              className="mt-0.5 size-4 shrink-0 text-primary-foreground"
+              className="mt-0.5 size-4 shrink-0 text-primary-ink"
               viewBox="0 0 16 16"
               fill="none"
               stroke="currentColor"
@@ -161,7 +161,7 @@ export default async function InvitePage({
 function ConsentHeader({ orgName, email, role }: { orgName: string; email: string; role: string }) {
   return (
     <div>
-      <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-secondary text-2xl font-extrabold text-secondary-foreground">
+      <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary text-2xl font-extrabold text-primary-foreground transition-colors duration-200">
         {orgName ? orgName[0].toUpperCase() : "?"}
       </div>
       <h1 className="mt-4 text-xl font-bold tracking-tight">

@@ -17,6 +17,10 @@ export const canUpdateCandidate = (role: OrgRole) => STAFF.includes(role); // no
 // Admin-only
 export const canManageJobOpenings = (role: OrgRole) => role === "admin"; // create/edit/close
 export const canExportData = (role: OrgRole) => role === "admin"; // CSV export
-export const canManageTeam = (role: OrgRole) => role === "admin"; // invite/remove members
+export const canManageTeam = (role: OrgRole) => role === "admin"; // invite members (all admins, owner or not)
 export const canManageBilling = (role: OrgRole) => role === "admin"; // billing + usage stats
-export const canManageOrgSettings = (role: OrgRole) => role === "admin"; // org rename etc.
+
+// Owner-only. Non-owner admins can invite (canManageTeam) but never
+// edit/delete the org itself.
+export const canManageOrgSettings = (isOwner: boolean) => isOwner; // org rename
+export const canDeleteOrg = (isOwner: boolean) => isOwner;

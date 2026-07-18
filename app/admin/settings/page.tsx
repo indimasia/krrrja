@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageHeader } from "@/components/page-header";
-import { InviteMemberForm, OrgNameForm } from "@/components/org-settings-forms";
+import { InviteMemberForm, OrgSettingsShell } from "@/components/org-settings-forms";
 import { getOrgContext, listOrgMembers, listPendingInvites } from "@/lib/data/org";
 import { revokeInvite } from "@/lib/actions/org";
 import { canManageTeam } from "@/lib/permissions";
@@ -19,42 +19,30 @@ import { canManageTeam } from "@/lib/permissions";
 export default async function OrgSettingsPage() {
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
-  if (!canManageTeam(ctx.role)) redirect("/admin/dashboard");
+
+  const canInvite = canManageTeam(ctx.role);
 
   const [members, invites] = await Promise.all([
     listOrgMembers(ctx.orgId),
-    listPendingInvites(ctx.orgId),
+    canInvite ? listPendingInvites(ctx.orgId) : Promise.resolve([]),
   ]);
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <PageHeader
-        title="Org Settings"
-        description="Manage your organization's profile and team."
-      />
-
-      <Card className="rounded-3xl">
-        <CardHeader>
-          <CardTitle className="font-bold">Organization</CardTitle>
-          <CardDescription>Shown across the app and in invite emails.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <OrgNameForm currentName={ctx.orgName} />
-        </CardContent>
-      </Card>
-
-      <Card className="rounded-3xl">
-        <CardHeader>
-          <CardTitle className="font-bold">Invite a teammate</CardTitle>
-          <CardDescription>
-            They&apos;ll get an email with a link to review and accept the invitation. Invites
-            expire after 7 days.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InviteMemberForm />
-        </CardContent>
-      </Card>
+    <OrgSettingsShell orgName={ctx.orgName} isOwner={ctx.isOwner}>
+      {canInvite && (
+        <Card className="rounded-3xl">
+          <CardHeader>
+            <CardTitle className="font-bold">Invite a teammate</CardTitle>
+            <CardDescription>
+              They&apos;ll get an email with a link to review and accept the invitation. Invites
+              expire after 7 days.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InviteMemberForm />
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="rounded-3xl">
         <CardHeader>
@@ -67,6 +55,8 @@ export default async function OrgSettingsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10" />
+                <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Joined</TableHead>
@@ -75,16 +65,26 @@ export default async function OrgSettingsPage() {
             <TableBody>
               {members.map((m) => (
                 <TableRow key={m.userId}>
+                  <TableCell>
+                    <Avatar size="sm">
+                      <AvatarImage src={m.avatarUrl ?? undefined} alt={m.name ?? m.email} />
+                      <AvatarFallback>{(m.name ?? m.email).charAt(0).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  </TableCell>
                   <TableCell className="font-medium">
-                    {m.email}
+                    {m.name ?? "—"}
                     {m.userId === ctx.userId && (
                       <span className="ml-2 text-xs text-muted-foreground">(you)</span>
                     )}
                   </TableCell>
+                  <TableCell className="text-muted-foreground">{m.email}</TableCell>
                   <TableCell>
                     <Badge variant={m.role === "admin" ? "default" : "outline"} className="capitalize">
                       {m.role}
                     </Badge>
+                    {m.userId === ctx.ownerId && (
+                      <Badge variant="outline" className="ml-1.5">Owner</Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(m.joinedAt).toLocaleDateString()}
@@ -136,6 +136,6 @@ export default async function OrgSettingsPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </OrgSettingsShell>
   );
 }
