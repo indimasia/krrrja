@@ -13,13 +13,14 @@ export const STRIPE_ENV_KEYS = {
   webhookSecret: "STRIPE_WEBHOOK_SECRET",
 } as const;
 
-// Pro is a one-time $40 lifetime purchase — the price is built inline at
-// checkout (price_data), so no product/price ID env var is needed.
+// Pro is a $40/month recurring subscription — the price is built inline at
+// checkout (price_data with a recurring interval), so no product/price ID env
+// var is needed.
 export function isStripeConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_WEBHOOK_SECRET);
 }
 
-// Lifetime Pro price, in cents. One-time charge, USD.
+// Monthly Pro price, in cents, charged every month. USD.
 export const PRO_PRICE_CENTS = 4000;
 
 let cached: Stripe | null = null;
@@ -35,9 +36,15 @@ export function getStripe(): Stripe {
 // Absolute origin for Checkout/Portal return URLs. NEXT_PUBLIC_SITE_URL wins
 // when set (canonical domain); otherwise derive from the request so local dev
 // and preview deploys work without extra config.
-// One-time lifetime model: the only event that changes state is Checkout
-// completing. No recurring invoices, no subscription lifecycle, no cancel.
-export const HANDLED_EVENT_TYPES = ["checkout.session.completed"] as const;
+// Monthly subscription model. Two events change org state:
+// - checkout.session.completed → subscription started, grant Pro.
+// - customer.subscription.deleted → subscription ended (cancelled or final
+//   payment failure), revoke Pro back to Free.
+// Renewals (invoice.paid) need no action — the org is already Pro.
+export const HANDLED_EVENT_TYPES = [
+  "checkout.session.completed",
+  "customer.subscription.deleted",
+] as const;
 
 // Verifies a Stripe webhook signature header ("t=...,v1=...") against the raw
 // request body. Standard Stripe scheme: HMAC-SHA256 over `${t}.${body}` with
