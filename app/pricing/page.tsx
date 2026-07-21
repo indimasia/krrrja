@@ -30,7 +30,7 @@ const PRO = [
   { label: "Notes & candidate status", included: true },
   { label: "Team roles (admin & recruiter)", included: true },
   { label: "CSV export", included: true },
-  { label: "Self-serve billing portal", included: true },
+  { label: "Cancel anytime, in-app", included: true },
 ];
 
 const FAQ = [
@@ -44,7 +44,7 @@ const FAQ = [
   },
   {
     q: "Can I cancel Pro anytime?",
-    a: "Yes, self-serve from the billing portal. Pro features stay active for a 3-day grace period, then your org returns to the Free plan.",
+    a: "Yes — cancel in one click from your billing page. Pro stays active until the end of the current billing period, then your org returns to Free. No further charges.",
   },
   {
     q: "Who sees my candidates' CVs?",
@@ -118,7 +118,7 @@ export default function PricingPage() {
             <div>
               <h2 className="text-xl font-bold tracking-tight">Pro</h2>
               <p className="mt-1 text-sm text-foreground/70">For teams hiring every month</p>
-              <p className="mt-4 text-4xl font-extrabold tracking-tight">Early access<span className="block text-base font-medium text-foreground/70">pricing announced at launch</span></p>
+              <p className="mt-4 text-4xl font-extrabold tracking-tight">$40<span className="text-base font-medium text-foreground/70"> / month</span></p>
             </div>
             <PlanList items={PRO} />
             <Button size="lg" variant="onPrimary" className="mt-auto h-12 rounded-full" render={<Link href="/signup">Start free, upgrade in-app</Link>} />

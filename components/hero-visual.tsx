@@ -55,7 +55,7 @@ export function HeroVisual() {
       onPointerMove={onPointerMove}
       onPointerEnter={() => setHovering(true)}
       onPointerLeave={onPointerLeave}
-      className="relative mx-auto w-full max-w-sm"
+      className="relative mx-auto w-full max-w-md"
       style={{ perspective: "1000px" }}
     >
       {/* Decorative orbiting dots — slowest depth layer */}
@@ -88,33 +88,57 @@ export function HeroVisual() {
         <HeroPreview />
       </div>
 
-      {/* Floating stat cards — nearest depth layer, drift opposite the pointer */}
-      <div
-        className="glass absolute left-1 top-6 flex items-center gap-2 rounded-2xl px-4 py-3 transition-transform duration-200 ease-out sm:-left-6 sm:top-8"
-        style={{ transform: `translate(${tilt.x * 14}px, ${tilt.y * 14}px)` }}
-      >
-        <LineChart className="size-5 text-primary-ink" />
-        <div>
-          <p className="text-sm font-bold leading-none">20K+</p>
-          <p className="text-xs text-muted-foreground">CVs screened</p>
+      {/* Floating stat cards — each beside its matching row, dashed connector toward the card.
+          Outer div owns positioning (plain `absolute`, so `.glass`'s position:relative can't
+          override it); inner `.glass` div owns the styling + pointer-parallax. */}
+      {/* 140+ → right of Jane Doe (top row). left-full anchors it just past the
+          card's right edge so it can never overlap; connector = dot + dashes. */}
+      <div className="absolute top-[27%] left-full -ml-4 -translate-y-1/2 sm:-ml-6">
+        <div
+          className="glass flex items-center gap-2 rounded-2xl px-4 py-3 transition-transform duration-200 ease-out"
+          style={{ transform: `translate(${tilt.x * 18}px, ${tilt.y * 18}px)` }}
+        >
+          <span aria-hidden className="absolute right-full top-1/2 hidden -translate-y-1/2 items-center gap-1 pr-1.5 sm:flex">
+            <span className="size-1.5 rounded-full bg-primary-ink/60" />
+            <span className="w-6 border-t-2 border-dashed border-primary-ink/40" />
+          </span>
+          <FileText className="size-5 text-primary-ink" />
+          <div>
+            <p className="text-sm font-bold leading-none">140+</p>
+            <p className="text-xs text-muted-foreground">Teams hiring</p>
+          </div>
         </div>
       </div>
-      <div
-        className="glass absolute right-1 bottom-16 flex items-center gap-2 rounded-2xl px-4 py-3 transition-transform duration-200 ease-out sm:-right-5"
-        style={{ transform: `translate(${tilt.x * 18}px, ${tilt.y * 18}px)` }}
-      >
-        <FileText className="size-5 text-primary-ink" />
-        <div>
-          <p className="text-sm font-bold leading-none">140+</p>
-          <p className="text-xs text-muted-foreground">Teams hiring</p>
+      {/* 20K+ → left of John Smith (middle row) */}
+      <div className="absolute top-[48%] right-full -mr-4 -translate-y-1/2 sm:-mr-6">
+        <div
+          className="glass flex items-center gap-2 rounded-2xl px-4 py-3 transition-transform duration-200 ease-out"
+          style={{ transform: `translate(${tilt.x * 14}px, ${tilt.y * 14}px)` }}
+        >
+          <span aria-hidden className="absolute left-full top-1/2 hidden -translate-y-1/2 items-center gap-1 pl-1.5 sm:flex">
+            <span className="w-6 border-t-2 border-dashed border-primary-ink/40" />
+            <span className="size-1.5 rounded-full bg-primary-ink/60" />
+          </span>
+          <LineChart className="size-5 text-primary-ink" />
+          <div>
+            <p className="text-sm font-bold leading-none">20K+</p>
+            <p className="text-xs text-muted-foreground">CVs screened</p>
+          </div>
         </div>
       </div>
-      <div
-        className="glass absolute bottom-1 right-8 flex items-center gap-2 rounded-full px-4 py-2 transition-transform duration-200 ease-out sm:-bottom-4 sm:right-10"
-        style={{ transform: `translate(${tilt.x * 10}px, ${tilt.y * 10}px)` }}
-      >
-        <ShieldCheck className="size-4 text-primary-ink" />
-        <span className="text-xs font-semibold">100% human-decided</span>
+      {/* 100% human-decided → right of Marco Rossi (bottom row) */}
+      <div className="absolute top-[68%] left-full -ml-6 -translate-y-1/2 sm:-ml-6">
+        <div
+          className="glass flex items-center gap-2 rounded-full px-4 py-2 transition-transform duration-200 ease-out"
+          style={{ transform: `translate(${tilt.x * 10}px, ${tilt.y * 10}px)` }}
+        >
+          <span aria-hidden className="absolute right-full top-1/2 hidden -translate-y-1/2 items-center gap-1 pr-1.5 sm:flex">
+            <span className="size-1.5 rounded-full bg-primary-ink/60" />
+            <span className="w-6 border-t-2 border-dashed border-primary-ink/40" />
+          </span>
+          <ShieldCheck className="size-4 text-primary-ink" />
+          <span className="text-xs font-semibold">100% human-decided</span>
+        </div>
       </div>
     </div>
   );

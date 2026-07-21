@@ -73,7 +73,7 @@ export function CvScoreCard() {
           Red flag: 8-month gap in 2024, unexplained
         </div>
       </div>
-      <div className="hero-float absolute bottom-6 left-2 flex items-center gap-2 rounded-full bg-card px-4 py-2 shadow-md">
+      <div className="hero-float absolute -bottom-5 left-4 flex items-center gap-2 rounded-full bg-card px-4 py-2 shadow-md">
         <ShieldCheck className="size-4 text-primary-ink" />
         <span className="text-xs font-semibold">100% human-decided</span>
       </div>
