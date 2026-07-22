@@ -1,10 +1,29 @@
 import type { NextConfig } from "next";
 
+// Only the files pdf-parse actually loads at runtime — NOT the whole packages.
+// pdfjs-dist is 36MB; shipping it wholesale (worse, via both the symlink and
+// the .pnpm real path) fattens the function past Vercel's lambda size limits
+// and the deploy dies at "Deploying outputs...". Runtime needs: the legacy
+// build entry + its dynamically-imported worker, plus the font/cmap/wasm
+// assets pdfjs may read for exotic PDFs. Both path spellings kept for the tiny
+// files because pdf-parse resolves pdfjs-dist through pnpm's real store path.
 const PDF_TRACE_INCLUDES = [
   "./node_modules/@napi-rs/canvas/**",
   "./node_modules/@napi-rs/canvas-*/**",
-  "./node_modules/pdfjs-dist/**",
-  "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/**",
+  "./node_modules/pdfjs-dist/package.json",
+  "./node_modules/pdfjs-dist/legacy/build/pdf.mjs",
+  "./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+  "./node_modules/pdfjs-dist/cmaps/**",
+  "./node_modules/pdfjs-dist/standard_fonts/**",
+  "./node_modules/pdfjs-dist/wasm/**",
+  "./node_modules/pdfjs-dist/iccs/**",
+  "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/package.json",
+  "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/legacy/build/pdf.mjs",
+  "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+  "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/cmaps/**",
+  "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/standard_fonts/**",
+  "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/wasm/**",
+  "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/iccs/**",
 ];
 
 const nextConfig: NextConfig = {
