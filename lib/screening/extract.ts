@@ -14,17 +14,25 @@ import { PDFParse } from "pdf-parse";
 // (retryable) apart from a genuinely EMPTY document (not retryable) — the old
 // code swallowed every failure to "" and mislabelled all of them "scanned".
 
-// Vercel file-tracing anchor for pdfjs's worker. pdf.mjs loads
-// ./pdf.worker.mjs via a computed dynamic import the tracer can't see, so the
-// worker gets dropped from the lambda ("Setting up fake worker failed: Cannot
-// find module .../pdf.worker.mjs"). A literal import specifier here makes NFT
-// include the real file (pdfjs-dist is in serverExternalPackages, so this
-// stays an on-disk reference instead of being bundled). The condition is never
-// true at runtime — nothing is actually loaded or executed.
-if (process.env.__TRACE_PDFJS_WORKER__) {
+// Vercel file-tracing anchors. pdf-parse loads both of these via computed
+// dynamic imports/requires the tracer can't see, so they get dropped from the
+// lambda and PDF parsing dies at runtime:
+//   - pdfjs's worker → "Setting up fake worker failed: Cannot find module
+//     .../pdf.worker.mjs"
+//   - @napi-rs/canvas (source of the DOMMatrix polyfill) → "ReferenceError:
+//     DOMMatrix is not defined"
+// Literal import specifiers here make NFT include the real files in every
+// route that can reach extractPdfText (both packages are in
+// serverExternalPackages, so these stay on-disk references instead of being
+// bundled). The condition is never true at runtime — nothing is loaded or
+// executed. Do NOT replace this with outputFileTracingIncludes globs: route
+// keys containing [id] are parsed as glob character classes and never match,
+// and globs into pnpm's store crash the packager with ENOTDIR.
+if (process.env.__TRACE_PDF_DEPS__) {
   // @ts-expect-error — the worker build ships no type declarations; this
   // import exists only as a file-tracing anchor and never runs.
   void import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+  void import("@napi-rs/canvas");
 }
 
 const MIN_TEXT_CHARS = 20; // below this the embedded layer is treated as absent
