@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal } from "lucide-react";
+import { Eye, FileText, MoreHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,9 +42,18 @@ export function CandidateActions({ candidate }: { candidate: Candidate }) {
           }
         />
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setDetailOpen(true)}>Detail</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setStatus("Shortlisted")}>Shortlist</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setStatus("Rejected")}>Reject</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setDetailOpen(true)}>
+            <Eye className="size-4" />
+            Detail
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setStatus("Shortlisted")}>
+            <FileText className="size-4" />
+            Shortlist
+          </DropdownMenuItem>
+          <DropdownMenuItem variant="destructive" onClick={() => setStatus("Rejected")}>
+            <X className="size-4" />
+            Reject
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <CandidateDetailDialog candidate={candidate} open={detailOpen} onOpenChange={setDetailOpen} />
