@@ -22,12 +22,24 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-export function CandidateDetailDialog({ candidate }: { candidate: Candidate }) {
+// Uncontrolled by default (renders its own "Detail" trigger button). Pass
+// open/onOpenChange to control it externally — e.g. from the "..." actions
+// menu — in which case no trigger is rendered.
+export function CandidateDetailDialog({
+  candidate,
+  open,
+  onOpenChange,
+}: {
+  candidate: Candidate;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const c = candidate;
+  const controlled = open !== undefined;
 
   return (
-    <Dialog>
-      <DialogTrigger render={<Button variant="outline" size="sm" />}>Detail</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {!controlled && <DialogTrigger render={<Button variant="outline" size="sm" />}>Detail</DialogTrigger>}
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{c.name}</DialogTitle>

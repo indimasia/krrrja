@@ -52,6 +52,65 @@ const SORT_COLUMNS: Record<CandidateSort, string> = {
   date: "created_at",
 };
 
+// Parses raw URL search params into validated candidate filters. Shared by the
+// candidates page and the CSV export route so both interpret ?status/?q/?from/
+// ?to/?sort/?dir identically and the export matches the table.
+export type CandidateFilterParams = {
+  status?: string;
+  sort?: string;
+  dir?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+};
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export function parseCandidateFilters(sp: CandidateFilterParams): {
+  status?: CandidateStatus;
+  sort: CandidateSort;
+  dir: "asc" | "desc";
+  q?: string;
+  from?: string;
+  to?: string;
+} {
+  const status = CANDIDATE_STATUS_VALUES.includes(sp.status as CandidateStatus)
+    ? (sp.status as CandidateStatus)
+    : undefined;
+  const sort = CANDIDATE_SORT_VALUES.includes(sp.sort as CandidateSort) ? (sp.sort as CandidateSort) : "score";
+  const dir = sp.dir === "asc" || sp.dir === "desc" ? sp.dir : sort === "score" ? "desc" : "asc";
+  const q = sp.q?.trim() || undefined;
+  const from = sp.from && DATE_RE.test(sp.from) ? sp.from : undefined;
+  const to = sp.to && DATE_RE.test(sp.to) ? sp.to : undefined;
+  return { status, sort, dir, q, from, to };
+}
+
+// In-memory filters applied after the DB query: search (name or score) and an
+// inclusive created_at date range. Shared by the candidates page and the CSV
+// export route so the download always matches what the table shows. In-memory
+// because the displayed name is derived from file_name in JS, so a DB ilike
+// can't match it exactly, and per-job candidate lists are small.
+export type CandidateClientFilters = { q?: string; from?: string; to?: string };
+
+export function filterCandidates(candidates: Candidate[], f: CandidateClientFilters): Candidate[] {
+  const q = f.q?.trim().toLowerCase();
+  const fromTs = f.from ? Date.parse(f.from) : NaN;
+  // `to` is inclusive — cut off at the following midnight.
+  const toTs = f.to ? Date.parse(f.to) + 24 * 60 * 60 * 1000 : NaN;
+
+  return candidates.filter((c) => {
+    if (q) {
+      const nameHit = c.name.toLowerCase().includes(q);
+      const scoreHit = c.score !== null && String(c.score).includes(q);
+      if (!nameHit && !scoreHit) return false;
+    }
+    const ts = Date.parse(c.createdAt);
+    if (!Number.isNaN(fromTs) && ts < fromTs) return false;
+    if (!Number.isNaN(toTs) && ts >= toTs) return false;
+    return true;
+  });
+}
+
 // Ranked list for one job opening. org_id filter is explicit even though RLS
 // already scopes reads — defense in depth, and it keeps the query index-friendly.
 export async function listCandidates(

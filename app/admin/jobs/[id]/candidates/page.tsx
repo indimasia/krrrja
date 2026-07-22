@@ -12,7 +12,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { CandidateDetailDialog } from "@/components/candidate-detail-dialog";
+import { CandidateActions } from "@/components/candidate-actions";
+import { CandidateFilters } from "@/components/candidate-filters";
 import { scoreTint } from "@/lib/candidate-score";
 import { CandidateStatusMenu } from "@/components/candidate-status-menu";
 import { PageHeader } from "@/components/page-header";
@@ -21,24 +22,15 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { getJobOpening } from "@/lib/data/jobs";
 import { getOrgContext } from "@/lib/data/org";
 import {
-  CANDIDATE_SORT_VALUES,
   CANDIDATE_STATUS_VALUES,
+  filterCandidates,
   listCandidates,
+  parseCandidateFilters,
   type CandidateSort,
 } from "@/lib/data/candidates";
-import type { CandidateStatus } from "@/lib/actions/candidates";
 import { canExportData } from "@/lib/permissions";
 
-type SearchParams = { status?: string; sort?: string; dir?: string };
-
-function parseFilters(sp: SearchParams): { status?: CandidateStatus; sort: CandidateSort; dir: "asc" | "desc" } {
-  const status = CANDIDATE_STATUS_VALUES.includes(sp.status as CandidateStatus)
-    ? (sp.status as CandidateStatus)
-    : undefined;
-  const sort = CANDIDATE_SORT_VALUES.includes(sp.sort as CandidateSort) ? (sp.sort as CandidateSort) : "score";
-  const dir = sp.dir === "asc" || sp.dir === "desc" ? sp.dir : sort === "score" ? "desc" : "asc";
-  return { status, sort, dir };
-}
+type SearchParams = { status?: string; sort?: string; dir?: string; q?: string; from?: string; to?: string };
 
 function queryString(params: Record<string, string | undefined>): string {
   const qs = new URLSearchParams();
@@ -80,14 +72,16 @@ export default async function CandidatesPage({
   const job = await getJobOpening(id);
   if (!job) notFound();
 
-  const { status, sort, dir } = parseFilters(await searchParams);
-  const candidates = await listCandidates(id, ctx.orgId, { status, sort, dir });
+  const { status, sort, dir, q, from, to } = parseCandidateFilters(await searchParams);
+  const all = await listCandidates(id, ctx.orgId, { status, sort, dir });
+  const candidates = filterCandidates(all, { q, from, to });
+  const filtersActive = Boolean(status || q || from || to);
 
   const basePath = `/admin/jobs/${job.id}/candidates`;
   const sortLink = (col: CandidateSort) => {
     // Clicking the active column flips direction; a new column gets its default.
     const nextDir = sort === col ? (dir === "asc" ? "desc" : "asc") : col === "score" ? "desc" : "asc";
-    return `${basePath}${queryString({ status, sort: col, dir: nextDir })}`;
+    return `${basePath}${queryString({ status, sort: col, dir: nextDir, q, from, to })}`;
   };
 
   // Straggler sweep: retry any pending/requeued scoring jobs after this page
@@ -107,26 +101,30 @@ export default async function CandidatesPage({
             <Button
               variant="outline"
               className="rounded-full"
-              render={<a href={`/admin/jobs/${job.id}/candidates/export`}>Export CSV</a>}
+              // Export carries the current filters so the CSV matches the table.
+              render={<a href={`${basePath}/export${queryString({ status, q, from, to })}`}>Export CSV</a>}
             />
           ) : undefined
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        {[undefined, ...CANDIDATE_STATUS_VALUES].map((s) => (
-          <Link
-            key={s ?? "all"}
-            href={`${basePath}${queryString({ status: s, sort, dir })}`}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-              status === s
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/70"
-            }`}
-          >
-            {s ?? "All"}
-          </Link>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {[undefined, ...CANDIDATE_STATUS_VALUES].map((s) => (
+            <Link
+              key={s ?? "all"}
+              href={`${basePath}${queryString({ status: s, sort, dir, q, from, to })}`}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                status === s
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/70"
+              }`}
+            >
+              {s ?? "All"}
+            </Link>
+          ))}
+        </div>
+        <CandidateFilters />
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-border bg-card">
@@ -151,7 +149,9 @@ export default async function CandidatesPage({
             {candidates.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
-                  {status ? `No ${status} candidates for this filter.` : "No candidates yet — upload CVs from the job opening page."}
+                  {filtersActive
+                    ? "No candidates match the current filters."
+                    : "No candidates yet — upload CVs from the job opening page."}
                 </TableCell>
               </TableRow>
             )}
@@ -183,7 +183,7 @@ export default async function CandidatesPage({
                   {new Date(c.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </TableCell>
                 <TableCell>
-                  <CandidateDetailDialog candidate={c} />
+                  <CandidateActions candidate={c} />
                 </TableCell>
               </TableRow>
             ))}

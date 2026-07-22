@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getJobOpening } from "@/lib/data/jobs";
 import { getOrgContext } from "@/lib/data/org";
-import { listCandidates } from "@/lib/data/candidates";
+import { filterCandidates, listCandidates, parseCandidateFilters } from "@/lib/data/candidates";
 import { canExportData } from "@/lib/permissions";
 
 function csvField(value: string | number | null): string {
@@ -11,7 +11,7 @@ function csvField(value: string | number | null): string {
 
 // CSV export of a job opening's candidates. Admin-only: members get a real
 // 403 here even if they craft the URL directly — UI hiding is not the gate.
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const ctx = await getOrgContext();
@@ -23,7 +23,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const job = await getJobOpening(id);
   if (!job) return new NextResponse("Not found", { status: 404 });
 
-  const candidates = await listCandidates(id, ctx.orgId);
+  // Same filter params as the candidates page — the CSV mirrors the table view.
+  const { status, q, from, to } = parseCandidateFilters(
+    Object.fromEntries(new URL(request.url).searchParams),
+  );
+  const candidates = filterCandidates(await listCandidates(id, ctx.orgId, { status }), { q, from, to });
 
   const header = ["file_name", "score", "status", "summary", "red_flags", "notes", "uploaded_at"];
   const rows = candidates.map((c) =>
