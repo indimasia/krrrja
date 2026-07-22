@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
     "/**": [
       "./node_modules/@napi-rs/canvas/**",
       "./node_modules/@napi-rs/canvas-*/**",
+      // pdfjs-dist ships its worker as a dynamically-imported .mjs
+      // (legacy/build/pdf.worker.mjs). It's a transitive dep of the external
+      // pdf-parse, so the tracer never sees the static reference and drops the
+      // worker + its build files from the lambda — "Cannot find module
+      // .../pdf.worker.mjs". Force the whole package in. Glob both the
+      // symlinked path and the real pnpm store path.
+      "./node_modules/pdfjs-dist/**",
+      "./node_modules/.pnpm/pdfjs-dist@*/node_modules/pdfjs-dist/**",
     ],
   },
 };
