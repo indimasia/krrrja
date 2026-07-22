@@ -1,7 +1,11 @@
 "use client";
 
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { FileText, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { updateCandidateStatus, type CandidateStatus } from "@/lib/actions/candidates";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +40,16 @@ export function CandidateDetailDialog({
 }) {
   const c = candidate;
   const controlled = open !== undefined;
+  const [pending, startTransition] = useTransition();
+
+  function setStatus(next: CandidateStatus) {
+    if (next === c.status) return;
+    startTransition(async () => {
+      const result = await updateCandidateStatus(c.id, next);
+      if (result?.error) toast.error(result.error);
+      else toast.success(`${c.name} marked ${next}.`);
+    });
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -103,6 +117,25 @@ export function CandidateDetailDialog({
             {c.notes?.trim() ? c.notes : <span className="text-muted-foreground">No notes.</span>}
           </p>
         </Section>
+
+        <div className="flex justify-end gap-2 border-t border-border pt-4">
+          <Button
+            variant="outline"
+            disabled={pending || c.status === "Shortlisted"}
+            onClick={() => setStatus("Shortlisted")}
+          >
+            <FileText className="size-4" />
+            Shortlist
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={pending || c.status === "Rejected"}
+            onClick={() => setStatus("Rejected")}
+          >
+            <X className="size-4" />
+            Reject
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -42,15 +42,15 @@ export function CandidateActions({ candidate }: { candidate: Candidate }) {
           }
         />
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setDetailOpen(true)}>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => setDetailOpen(true)}>
             <Eye className="size-4" />
             Detail
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setStatus("Shortlisted")}>
+          <DropdownMenuItem className="cursor-pointer" onClick={() => setStatus("Shortlisted")}>
             <FileText className="size-4" />
             Shortlist
           </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onClick={() => setStatus("Rejected")}>
+          <DropdownMenuItem variant="destructive" className="cursor-pointer" onClick={() => setStatus("Rejected")}>
             <X className="size-4" />
             Reject
           </DropdownMenuItem>
