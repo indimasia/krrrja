@@ -20,24 +20,21 @@ const nextConfig: NextConfig = {
   // core + lang data) both do runtime file/worker loading.
   serverExternalPackages: ["pdf-parse", "tesseract.js", "@napi-rs/canvas", "pdfjs-dist"],
 
-  // Vercel's file tracer misses @napi-rs/canvas's platform .node binary because
-  // it's a *transitive* dep of the external pdf-parse and loaded via dynamic
-  // require. Without the binary the lambda's require("@napi-rs/canvas") fails,
-  // so pdf-parse never sets globalThis.DOMMatrix and PDF parsing throws
-  // "ReferenceError: DOMMatrix is not defined". Force the binaries in. Local
-  // dev is unaffected (full node_modules present).
-  // Force the PDF native deps into the lambda. pdf-parse's transitive deps
-  // (@napi-rs/canvas for the DOMMatrix polyfill; pdfjs-dist's dynamically
-  // imported pdf.worker.mjs) aren't seen by Vercel's file tracer, so without
-  // this they're dropped and PDF parsing dies at runtime.
+  // Vercel's file tracer misses @napi-rs/canvas's .node binary (dynamic
+  // require inside the external pdf-parse) — without it the lambda's
+  // require("@napi-rs/canvas") fails, the DOMMatrix polyfill is never set, and
+  // PDF parsing throws "ReferenceError: DOMMatrix is not defined". Force it in.
   //
-  // Scope to ONLY the two routes that touch pdf-parse — NOT "/**". A "/**" key
-  // bloats EVERY route's function with these heavy binaries, which pushes each
-  // past Vercel's per-lambda size cap so its auto-merge of small functions
-  // fails; the app then ships 21 separate functions and blows the Hobby
-  // 12-function limit. Narrow scope keeps the other ~19 routes small and
-  // mergeable.
+  // Scope to ONLY the PDF routes — NOT "/**". A "/**" key bloats every route's
+  // function past Vercel's per-lambda size cap, its auto-merge of small
+  // functions fails, and the app ships 21 separate functions — over the Hobby
+  // 12-function limit.
+  //
+  // Every route whose function can run extractPdfText — matches the routes
+  // whose .nft.json traces pdf.worker.mjs. /admin/jobs/[id] is here because
+  // the upload Server Action posts to the job-detail page's own function.
   outputFileTracingIncludes: {
+    "/admin/jobs/[id]": PDF_TRACE_INCLUDES,
     "/admin/jobs/[id]/candidates": PDF_TRACE_INCLUDES,
     "/api/jobs/parse-jd": PDF_TRACE_INCLUDES,
   },
