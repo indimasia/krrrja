@@ -69,11 +69,14 @@ export default async function CandidatesPage({
   const ctx = await getOrgContext();
   if (!ctx) redirect("/login");
 
-  const job = await getJobOpening(id);
-  if (!job) notFound();
-
   const { status, sort, dir, q, from, to } = parseCandidateFilters(await searchParams);
-  const all = await listCandidates(id, ctx.orgId, { status, sort, dir });
+  // Independent queries — run concurrently, this page re-fetches on every
+  // filter change and the sequential chain was the felt latency.
+  const [job, all] = await Promise.all([
+    getJobOpening(id),
+    listCandidates(id, ctx.orgId, { status, sort, dir }),
+  ]);
+  if (!job) notFound();
   const candidates = filterCandidates(all, { q, from, to });
   const filtersActive = Boolean(status || q || from || to);
 

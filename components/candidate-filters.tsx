@@ -74,16 +74,20 @@ export function CandidateFilters() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
-  function onRangeSelect(selected: DateRange | undefined, day: Date) {
-    // Third click on a completed range starts a fresh one from that day
-    // instead of react-day-picker's default extend/shrink behavior.
-    const next: DateRange | undefined =
-      range?.from && range?.to ? { from: day, to: undefined } : selected;
-    setRange(next);
-    if (next?.from && next?.to) {
-      updateParams({ from: toParam(next.from), to: toParam(next.to) });
-      setCalendarOpen(false);
+  // Manual two-click range: react-day-picker's own range math is ignored — it
+  // can hand back {from: d, to: d} on the FIRST click (instantly "completing"
+  // the range) and extends/shrinks on later clicks. Here: first click anchors
+  // `from`, second click completes (ordered either direction), a click on a
+  // completed range starts over from that day.
+  function onRangeSelect(_selected: DateRange | undefined, day: Date) {
+    if (!range?.from || range.to) {
+      setRange({ from: day, to: undefined });
+      return;
     }
+    const [from, to] = day < range.from ? [day, range.from] : [range.from, day];
+    setRange({ from, to });
+    updateParams({ from: toParam(from), to: toParam(to) });
+    setCalendarOpen(false);
   }
 
   const rangeLabel = range?.from
@@ -118,6 +122,7 @@ export function CandidateFilters() {
         />
         <PopoverContent align="end" className="w-auto p-0">
           <Calendar
+            className="[--cell-radius:9999px]"
             mode="range"
             selected={range}
             onSelect={onRangeSelect}
