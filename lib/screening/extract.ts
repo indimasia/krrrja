@@ -14,6 +14,19 @@ import { PDFParse } from "pdf-parse";
 // (retryable) apart from a genuinely EMPTY document (not retryable) — the old
 // code swallowed every failure to "" and mislabelled all of them "scanned".
 
+// Vercel file-tracing anchor for pdfjs's worker. pdf.mjs loads
+// ./pdf.worker.mjs via a computed dynamic import the tracer can't see, so the
+// worker gets dropped from the lambda ("Setting up fake worker failed: Cannot
+// find module .../pdf.worker.mjs"). A literal import specifier here makes NFT
+// include the real file (pdfjs-dist is in serverExternalPackages, so this
+// stays an on-disk reference instead of being bundled). The condition is never
+// true at runtime — nothing is actually loaded or executed.
+if (process.env.__TRACE_PDFJS_WORKER__) {
+  // @ts-expect-error — the worker build ships no type declarations; this
+  // import exists only as a file-tracing anchor and never runs.
+  void import("pdfjs-dist/legacy/build/pdf.worker.mjs");
+}
+
 const MIN_TEXT_CHARS = 20; // below this the embedded layer is treated as absent
 const OCR_MAX_PAGES = 5; // bound OCR cost — CVs are 1-2 pages in practice
 const OCR_SCALE = 2; // upscale render for legible glyphs
