@@ -4,14 +4,17 @@ import { HANDLED_EVENT_TYPES, isStripeConfigured, verifyStripeSignature } from "
 
 // Stripe webhook receiver. Fully functional once STRIPE_WEBHOOK_SECRET is set:
 // signature always verified, idempotent by event.id (stripe_events table).
-// One-time lifetime model — the only event that matters is Checkout completing,
-// which flips the org to Pro permanently. Until keys exist it answers 503 so a
-// misconfigured deploy is loud, not silently dropping events.
+// Monthly subscription model — Checkout completing grants Pro; the subscription
+// being deleted (cancel or final payment failure) revokes it back to Free.
+// Until keys exist it answers 503 so a misconfigured deploy is loud, not
+// silently dropping events.
 
 type StripeEvent = {
   id: string;
   type: string;
-  data: { object: { customer?: string | null } };
+  // checkout.session.completed → object.subscription is the new sub id.
+  // customer.subscription.deleted → object.customer identifies the org.
+  data: { object: { customer?: string | null; subscription?: string | null } };
 };
 
 export async function POST(request: Request) {
@@ -69,10 +72,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  // Checkout completed → lifetime Pro. One-time purchase, so there is no
-  // renewal, no cancel, no downgrade path. subscription_status="lifetime"
-  // records how Pro was granted; grace_expires_at cleared for good measure.
-  const update = { subscription_tier: "pro", subscription_status: "lifetime", grace_expires_at: null };
+  // Map event → org state. checkout.session.completed starts the subscription
+  // (grant Pro, remember the sub id so the cancel action can reach it);
+  // customer.subscription.deleted ends it — this fires at period end for a
+  // scheduled cancel, so it is where Pro actually lapses. The HANDLED_EVENT_TYPES
+  // gate above guarantees event.type is one of these two.
+  const update =
+    event.type === "customer.subscription.deleted"
+      ? {
+          subscription_tier: "free",
+          subscription_status: "canceled",
+          stripe_subscription_id: null,
+          grace_expires_at: null,
+        }
+      : {
+          subscription_tier: "pro",
+          subscription_status: "active",
+          stripe_subscription_id: event.data?.object?.subscription ?? null,
+          grace_expires_at: null,
+        };
 
   {
     const { error: updateError } = await admin.from("orgs").update(update).eq("id", org.id);

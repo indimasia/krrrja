@@ -14,6 +14,8 @@ export type OrgContext = {
   ownerId: string | null;
   orgName: string;
   subscriptionTier: "free" | "pro";
+  subscriptionStatus: string | null;
+  graceExpiresAt: string | null;
   suspended: boolean;
 };
 
@@ -27,7 +29,7 @@ export async function getOrgContext(): Promise<OrgContext | null> {
 
   const { data: membership } = await supabase
     .from("org_members")
-    .select("org_id, role, orgs(name, subscription_tier, suspended_at, owner_id)")
+    .select("org_id, role, orgs(name, subscription_tier, subscription_status, grace_expires_at, suspended_at, owner_id)")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -35,12 +37,14 @@ export async function getOrgContext(): Promise<OrgContext | null> {
   const org = membership.orgs as unknown as {
     name: string;
     subscription_tier: string;
+    subscription_status: string | null;
+    grace_expires_at: string | null;
     suspended_at: string | null;
     owner_id: string | null;
   };
 
-  // Pro is a one-time lifetime purchase — no cancel, no grace, no downgrade.
-  // The tier column is the whole story.
+  // Pro is a monthly subscription. The tier column is the source of truth —
+  // the webhook flips it to 'free' when the subscription is cancelled.
   const tier = (org.subscription_tier as "free" | "pro") ?? "free";
 
   return {
@@ -51,6 +55,8 @@ export async function getOrgContext(): Promise<OrgContext | null> {
     ownerId: org.owner_id,
     orgName: org.name,
     subscriptionTier: tier,
+    subscriptionStatus: org.subscription_status ?? null,
+    graceExpiresAt: org.grace_expires_at ?? null,
     suspended: org.suspended_at !== null,
   };
 }

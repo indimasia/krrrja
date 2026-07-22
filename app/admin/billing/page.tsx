@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
-import { UpgradeButton } from "@/components/billing-buttons";
+import { CancelSubscriptionButton, UpgradeButton } from "@/components/billing-buttons";
 import { FREE_TIER_LIMITS, getOrgContext, getOrgUsage } from "@/lib/data/org";
 import { canManageBilling } from "@/lib/permissions";
 
@@ -18,7 +18,7 @@ const PRO_FEATURES = [
   "Unlimited job openings",
   "Unlimited daily CV uploads",
   "AI scoring, summaries & red flags",
-  "Lifetime access — pay once, no renewals",
+  "Cancel anytime — no lock-in",
   "Priority support",
 ];
 
@@ -54,6 +54,10 @@ export default async function BillingPage({
 
   const [usage, { checkout }] = await Promise.all([getOrgUsage(ctx.orgId), searchParams]);
   const isPro = ctx.subscriptionTier === "pro";
+  const canceling = ctx.subscriptionStatus === "canceling";
+  const graceDate = ctx.graceExpiresAt
+    ? new Date(ctx.graceExpiresAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+    : null;
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -68,7 +72,7 @@ export default async function BillingPage({
       {checkout === "success" && (
         <Card className="rounded-3xl border-transparent bg-primary">
           <CardContent className="text-sm text-primary-foreground">
-            <p className="font-semibold">Payment received — Pro is yours for life.</p>
+            <p className="font-semibold">Subscription started — welcome to Pro.</p>
             <p className="mt-1 text-primary-foreground/80">
               Pro unlocks as soon as Stripe confirms the payment. Refresh in a moment if this page still shows Free.
             </p>
@@ -134,7 +138,7 @@ export default async function BillingPage({
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-extrabold tracking-tight">
-              $40<span className="text-sm font-medium text-muted-foreground"> once · lifetime</span>
+              $40<span className="text-sm font-medium text-muted-foreground"> / month</span>
             </p>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               {PRO_FEATURES.map((f) => (
@@ -142,9 +146,18 @@ export default async function BillingPage({
               ))}
             </ul>
             {isPro ? (
-              <p className="mt-5 rounded-full bg-primary-surface px-4 py-2 text-center text-sm font-medium text-primary-ink">
-                Lifetime access active — no renewals, nothing to manage.
-              </p>
+              canceling ? (
+                <p className="mt-5 rounded-full bg-secondary-surface px-4 py-2 text-center text-sm font-medium text-secondary-ink">
+                  Cancelled — Pro stays active until {graceDate ?? "the end of the period"}, then reverts to Free. No further charges.
+                </p>
+              ) : (
+                <>
+                  <p className="mt-5 rounded-full bg-primary-surface px-4 py-2 text-center text-sm font-medium text-primary-ink">
+                    Pro active — renews monthly.
+                  </p>
+                  <CancelSubscriptionButton />
+                </>
+              )
             ) : (
               <UpgradeButton />
             )}
